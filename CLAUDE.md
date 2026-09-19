@@ -46,3 +46,26 @@ render against Snapshot fixtures). Handlers stay thin and untested.
 I will be using the Source Control tab to execute git actions unless it makes more sense to do it from the command line.
 
 I want a main and develop branch, but will be doing my work in feature/fix branches.
+
+## Environment and deployment
+
+- Node 22 everywhere: .nvmrc, projen minNodeVersion/workflowNodeVersion, Lambda NODEJS_22_X.
+- npm only (set via projen packageManager). Never introduce yarn or a yarn.lock.
+- AWS: single account 770599626613, region us-east-1, single stack `WeatherWebpage`.
+  Env is pinned in src/main.ts; don't make it env-agnostic.
+- Local AWS auth: `aws login --profile billy`; run CDK with `AWS_PROFILE=billy`.
+- CI auth: GitHub OIDC → IAM role `weather-webpage-github-deploy`, trusted only for
+  refs/heads/main of this repo. Its only permission is sts:AssumeRole on the CDK
+  bootstrap roles (cdk-hnb659fds-*).
+- bootstrap/*.json are applied manually with the AWS CLI, not by CDK. Editing the
+  file does nothing until `aws iam update-assume-role-policy` / `put-role-policy` is run.
+- Route 53 hosted zone for bill-lenoir.com exists outside this stack; the stack looks
+  it up and adds records, never creates or deletes it.
+
+## Branches and CI
+
+- feature/*and fix/* → develop (squash) → main (merge commit, never squash).
+- build workflow: PRs to any branch, pushes to develop.
+- deploy workflow: pushes to main and manual dispatch; runs `npx projen build`
+  then `npx projen deploy`.
+  

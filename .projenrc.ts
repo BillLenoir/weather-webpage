@@ -50,6 +50,7 @@ deploy.addJobs({
           "aws-region": "us-east-1",
         },
       },
+      { run: "npx projen build" },
       { run: "npx projen deploy" },
     ],
   },

@@ -27,5 +27,7 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+      - id: auto_6f3f6e71
+        run: npx projen build
       - id: auto_9206d7a4
         run: npx projen deploy
