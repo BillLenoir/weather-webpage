@@ -1,4 +1,4 @@
-import { awscdk } from "projen";
+import { awscdk, javascript } from "projen";
 import { JobPermission } from "projen/lib/github/workflows-model";
 
 const project = new awscdk.AwsCdkTypeScriptApp({
@@ -9,6 +9,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   prettier: true,
   minNodeVersion: "22.0.0",
   workflowNodeVersion: "22",
+  packageManager: javascript.NodePackageManager.NPM,
 
   buildWorkflowOptions: {
     workflowTriggers: {
