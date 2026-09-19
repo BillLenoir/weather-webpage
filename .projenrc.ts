@@ -7,13 +7,22 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   projenrcTs: true,
   prettier: true,
 
+  buildWorkflowOptions: {
+    workflowTriggers: {
+      pullRequest: {},
+      workflowDispatch: {},
+      push: { branches: ['develop'] },
+    },
+  },
+
+
   lambdaOptions: {
     runtime: awscdk.LambdaRuntime.NODEJS_22_X, // default is older; set explicitly
   },
 
   requireApproval: awscdk.ApprovalLevel.NEVER, // needed for CI deploy
   release: false,        // it's an app, nothing to publish
-  depsUpgrade: false,    // see below
+  depsUpgrade: false,
 
   deps: ['@aws-sdk/client-s3'],
 });
