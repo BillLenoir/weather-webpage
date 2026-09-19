@@ -13,18 +13,15 @@
     "eslint": "projen eslint",
     "package": "projen package",
     "post-compile": "projen post-compile",
-    "post-upgrade": "projen post-upgrade",
     "pre-compile": "projen pre-compile",
     "synth": "projen synth",
     "synth:silent": "projen synth:silent",
     "test": "projen test",
     "test:watch": "projen test:watch",
-    "upgrade": "projen upgrade",
     "watch": "projen watch",
     "projen": "projen"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^2",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.2",
     "@typescript-eslint/eslint-plugin": "^8",
@@ -32,24 +29,22 @@
     "aws-cdk": "^2",
     "esbuild": "^0.28.2",
     "eslint": "^9",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.6",
     "jest": "^30.5.2",
     "jest-junit": "^17",
+    "prettier": "^3.9.8",
     "projen": "^0.103.25",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1136.0",
     "aws-cdk-lib": "^2.270.0",
     "constructs": "^10.5.1"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "npm",
-      "onFail": "ignore"
-    }
   },
   "license": "Apache-2.0",
   "publishConfig": {

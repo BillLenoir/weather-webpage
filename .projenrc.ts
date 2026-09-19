@@ -1,14 +1,21 @@
-import { awscdk, javascript } from 'projen';
-const project = new awscdk.AwsCdkTypeScriptApp({
-  cdkVersion: '2.270.0',
-  name: 'weather-webpage',
-  packageManager: javascript.NodePackageManager.NPM,
-  projenrcTs: true,
+import { awscdk } from 'projen';
 
-  // defaultReleaseBranch: "main",  /* The name of the main release branch. */
-  // deps: [],                      /* Runtime dependencies of this module. */
-  // description: undefined,        /* The description is just a string that helps people understand the purpose of the package. */
-  // devDeps: [],                   /* Build dependencies for this module. */
-  // packageName: undefined,        /* The "name" in package.json. */
+const project = new awscdk.AwsCdkTypeScriptApp({
+  name: 'weather-webpage',
+  defaultReleaseBranch: 'main',
+  cdkVersion: '2.270.0',
+  projenrcTs: true,
+  prettier: true,
+
+  lambdaOptions: {
+    runtime: awscdk.LambdaRuntime.NODEJS_22_X, // default is older; set explicitly
+  },
+
+  requireApproval: awscdk.ApprovalLevel.NEVER, // needed for CI deploy
+  release: false,        // it's an app, nothing to publish
+  depsUpgrade: false,    // see below
+
+  deps: ['@aws-sdk/client-s3'],
 });
+
 project.synth();
