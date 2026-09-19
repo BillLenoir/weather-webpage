@@ -41,6 +41,8 @@ No client-side JS. Not a portfolio piece: working and maintainable over polished
 Jest. Test pure functions (provider adapters against fixtures in test/fixtures,
 render against Snapshot fixtures). Handlers stay thin and untested.
 
-## VS Code Usage
+## Git Usage
 
-I will be using the Source Control tab to execute git actions.
+I will be using the Source Control tab to execute git actions unless it makes more sense to do it from the command line.
+
+I want a main and develop branch, but will be doing my work in feature/fix branches.
