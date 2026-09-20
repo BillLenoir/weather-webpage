@@ -10,6 +10,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   minNodeVersion: "22.0.0",
   workflowNodeVersion: "22",
   packageManager: javascript.NodePackageManager.NPM,
+  prettierOptions: { settings: { singleQuote: true } },
 
   buildWorkflowOptions: {
     workflowTriggers: {

@@ -64,7 +64,7 @@ I want a main and develop branch, but will be doing my work in feature/fix branc
 
 ## Branches and CI
 
-- feature/*and fix/* → develop (squash) → main (merge commit, never squash).
+- feature/* and fix/* → develop (squash) → main (merge commit, never squash).
 - build workflow: PRs to any branch, pushes to develop.
 - deploy workflow: pushes to main and manual dispatch; runs `npx projen build`
   then `npx projen deploy`.
