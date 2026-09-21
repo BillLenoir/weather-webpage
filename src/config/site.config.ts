@@ -4,6 +4,7 @@ export interface SiteConfig {
   domainName: string;
   subdomain: string;
   projectName: string;
+  copyrightOwner: string;
 }
 
 export const site: SiteConfig = {
@@ -12,4 +13,5 @@ export const site: SiteConfig = {
   domainName: 'bill-lenoir.com', // existing Route 53 hosted zone
   subdomain: 'weather',
   projectName: 'weather-webpage',
+  copyrightOwner: 'Bill Lenoir',
 };
