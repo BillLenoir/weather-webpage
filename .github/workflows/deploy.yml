@@ -12,6 +12,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     steps:
       - id: auto_c3fe249f
         uses: actions/checkout@v4
