@@ -12,7 +12,9 @@ Placeholders are marked `<like-this>`:
 - `<owner>/<repo>`: your GitHub repository, e.g. `octocat/weather-webpage`
 - `<domain>` and `<subdomain>`: from `site.config.ts`
 - `<project-name>`: `projectName` from `site.config.ts`
-- `<zone-id>`: the hosted zone's ID
+- `<slug>`: a page's `slug` from `weather.config.ts`
+- `<zone-id>`: the hosted zone's ID, without the `/hostedzone/` prefix that
+  `list-hosted-zones` includes
 
 Everything deploys to `us-east-1`; see the README for why.
 
@@ -213,9 +215,11 @@ AWS_PROFILE=<profile> npx projen deploy
 
 The first deploy takes several minutes, most of it waiting for the ACM
 certificate to validate through DNS and for CloudFront to create the
-distribution. When it finishes, `https://<subdomain>.<domain>` should serve the
-page within an hour, once the first scheduled fetch has run. Until then it
-returns 403, because there's no `index.html` yet. That's expected.
+distribution. When it finishes, your pages appear at
+`https://<subdomain>.<domain>/<slug>/` once the first scheduled fetch has run,
+which is within one fetch interval (hourly by default). Until then the site
+returns 403, because nothing has been written to the bucket yet. That's
+expected.
 
 If the deploy fails, CloudFormation rolls back. Check the stack's **Events** tab
 in the CloudFormation console for the first failed resource.
@@ -233,9 +237,9 @@ In the workflow run, check that:
   and not another branch.
 - **The deploy reports no changes, or only Lambda asset updates.** Your local
   deploy already created the stack, so CI should find nothing else to do. Lambda
-  bundles can hash differently on another machine, so a function update on its
-  own is harmless. Any other resource change means CI is building a different
-  template from yours; usually an uncommitted file.
+  bundles can occasionally hash differently on another machine, so a function
+  update on its own is harmless. Any other resource change means CI is building
+  a different template from yours; usually an uncommitted file.
 
 From now on, every push to `main` deploys.
 
@@ -305,8 +309,9 @@ locally and commit the result. After any change to `.projenrc.ts`, run
 `npx projen` and then `npx projen build`, and commit everything both change.
 
 **A pull request is stuck with `build` "Expected — Waiting for status to be
-reported".** The build changed files, so projen's `self-mutation` job pushed a
-fix commit to your branch. Commits pushed by workflows don't trigger new
+reported".** Avoid this by running `npx projen build` locally before pushing.
+It happens when the build changed files, so projen's `self-mutation` job pushed
+a fix commit to your branch. Commits pushed by workflows don't trigger new
 workflow runs, so `build` never runs on the new head and the required check
 stays pending. Pull the branch and push again; an empty commit is enough:
 
