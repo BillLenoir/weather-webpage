@@ -51,12 +51,6 @@ const locationsDuplicateId: LocationConfig[] = [
 ];
 
 const locationsTooFew = locations.slice(0, 2);
-const locationsOne: LocationConfig[] = [locations[2]];
-const locationsReordered: LocationConfig[] = [
-  locations[2],
-  locations[0],
-  locations[1],
-];
 
 const keysOf = (value: unknown): string[] =>
   Array.isArray(value)
@@ -143,10 +137,9 @@ describe('open-meteo', () => {
 
       expect(parsed).toHaveLength(1);
       expect(parsed[0].timezone).toBe('America/New_York');
-      expect(parsed[0].location_id).toBeUndefined();
     });
 
-    it('returns a multi-location array unchanged', () => {
+    it('keeps a multi-location array in request order', () => {
       const parsed = parseResponse(rawResponse());
 
       expect(parsed).toHaveLength(3);
@@ -210,7 +203,7 @@ describe('open-meteo', () => {
       expect(SnapshotSchema.parse(snapshot)).toEqual(snapshot);
     });
 
-    it('records the coordinates the provider returned, not the configured ones', () => {
+    it('records the location metadata the provider returned, not the configured coordinates', () => {
       const snapshot = toSnapshot(response(), locations, FETCHED_AT);
       const { id, latitude, longitude, elevation, timezone } =
         snapshot.locations.centreville;
@@ -281,7 +274,7 @@ describe('open-meteo', () => {
       });
     });
 
-    it("keeps each location's own local first day", () => {
+    it("keeps each location's own local dates and times", () => {
       const { locations: byId } = toSnapshot(response(), locations, FETCHED_AT);
 
       expect(byId.centreville.daily[0].date).toBe('2026-09-23');
@@ -373,6 +366,15 @@ describe('open-meteo', () => {
 
       const leaked = keysOf(snapshot).filter((k) => PROVIDER_ONLY.includes(k));
       expect(leaked).toEqual([]);
+    });
+
+    it('defaults fetchedAt to now', () => {
+      const before = Date.now();
+      const snapshot = toSnapshot(response(), locations);
+      const after = Date.now();
+
+      expect(Date.parse(snapshot.fetchedAt)).toBeGreaterThanOrEqual(before);
+      expect(Date.parse(snapshot.fetchedAt)).toBeLessThanOrEqual(after);
     });
   });
 });

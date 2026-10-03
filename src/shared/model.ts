@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
 export const DayForecastSchema = z.object({
-  date: z.string(), // 'YYYY-MM-DD', the location's local date
+  date: z.iso.date(), // 'YYYY-MM-DD', the location's local date
   conditionCode: z.number(),
   maxC: z.number(),
   minC: z.number(),
   precipProbability: z.number().nullable(),
-  sunrise: z.string(), // local ISO, no offset
-  sunset: z.string(),
+  sunrise: z.iso.datetime({ local: true }), // local ISO, no offset
+  sunset: z.iso.datetime({ local: true }),
 });
 export type DayForecast = z.infer<typeof DayForecastSchema>;
 
 export const CurrentWeatherSchema = z.object({
-  time: z.string(), // local ISO, no offset
+  time: z.iso.datetime({ local: true }), // local ISO, no offset
   conditionCode: z.number(),
   isDay: z.boolean(), // API sends 0/1; normalize here
   temperatureC: z.number(),
