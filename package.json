@@ -11,6 +11,8 @@
     "diff": "projen diff",
     "eject": "projen eject",
     "eslint": "projen eslint",
+    "fetch:fixture": "projen fetch:fixture",
+    "fetch:once": "projen fetch:once",
     "package": "projen package",
     "post-compile": "projen post-compile",
     "pre-compile": "projen pre-compile",

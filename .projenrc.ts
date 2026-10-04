@@ -16,6 +16,9 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   workflowNodeVersion: NODE_MAJOR,
   prettier: true,
   prettierOptions: { settings: { singleQuote: true } },
+  tsconfig: {
+    compilerOptions: { noUnusedLocals: true, noUnusedParameters: true },
+  },
 
   // Licensing
   license: 'MIT',
@@ -43,6 +46,15 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   requireApproval: awscdk.ApprovalLevel.NEVER, // required for unattended CI deploys
 
   deps: ['@aws-sdk/client-s3', 'zod'],
+});
+
+project.addTask('fetch:once', {
+  description: 'Fetch live weather and print the Snapshot',
+  exec: 'ts-node src/scripts/fetch-once.ts',
+});
+project.addTask('fetch:fixture', {
+  description: 'Re-record test/fixtures/snapshot.json from live weather',
+  exec: 'ts-node src/scripts/fetch-once.ts > test/fixtures/snapshot.json',
 });
 
 const deploy = project.github!.addWorkflow('deploy');
