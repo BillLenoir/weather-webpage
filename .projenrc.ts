@@ -52,10 +52,13 @@ project.addTask('fetch:once', {
   description: 'Fetch live weather and print the Snapshot',
   exec: 'ts-node src/scripts/fetch-once.ts',
 });
+// Scratch capture, not a fixture: renderer fixtures are derived from
+// test/fixtures/open-meteo.json through toSnapshot, never recorded.
 project.addTask('fetch:fixture', {
-  description: 'Re-record test/fixtures/snapshot.json from live weather',
-  exec: 'ts-node src/scripts/fetch-once.ts > test/fixtures/snapshot.json',
+  description: 'Save live weather as a Snapshot in tmp/snapshot.json',
+  exec: 'mkdir -p tmp && ts-node src/scripts/fetch-once.ts > tmp/snapshot.json',
 });
+project.gitignore.exclude('/tmp/');
 
 const deploy = project.github!.addWorkflow('deploy');
 deploy.on({ push: { branches: ['main'] }, workflowDispatch: {} });

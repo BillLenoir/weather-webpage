@@ -8,6 +8,7 @@ import {
   toSnapshot,
 } from '../../../src/fetcher/providers/open-meteo';
 import { SnapshotSchema } from '../../../src/shared/model';
+import { locations } from '../../fixtures/locations';
 import raw from '../../fixtures/open-meteo.json';
 
 const FETCHED_AT = '2026-09-23T21:15:00.000Z';
@@ -22,25 +23,6 @@ const FETCHED_AT = '2026-09-23T21:15:00.000Z';
 // a Date from provider strings.
 const rawResponse = () => structuredClone(raw);
 const response = () => parseResponse(rawResponse());
-
-// Same order as the recorded response's entries, so each entry's location_id
-// indexes into this array. Entry 0's location_id is absent, entries 1 and 2
-// carry 1 and 2, so a single-location test must use entry 0.
-const locations: LocationConfig[] = [
-  {
-    id: 'centreville',
-    label: 'Centreville, VA',
-    latitude: 38.84,
-    longitude: -77.43,
-  },
-  { id: 'astoria', label: 'Astoria, NY', latitude: 40.77, longitude: -73.92 },
-  {
-    id: 'dongtan',
-    label: 'Dongtan, Hwaseong',
-    latitude: 37.19,
-    longitude: 127.12,
-  },
-];
 
 // Two pages using one id for different places is a config mistake; the fetcher
 // dedupes by id upstream, and toSnapshot is the backstop.
