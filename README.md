@@ -77,7 +77,7 @@ npx projen fetch:once     # fetch live weather and print the Snapshot
 npx projen fetch:fixture  # the same, saved to tmp/snapshot.json
 ```
 
-This is a [projen](https://projen.io/) project. Don't hand-edit `package.json`, `tsconfig*.json`, the eslint config, `.github/workflows/*`, `.gitignore`, `LICENSE` or the generated `*-function.ts` files. Change `.projenrc.ts` instead and run `npx projen`, then `npx projen build`, and commit everything both commands change; CI fails the build if it produces uncommitted changes.
+This is a [projen](https://projen.io/) project. Don't hand-edit a generated file: `.gitattributes` lists them all, each marked `linguist-generated` — among them `package.json`, `tsconfig*.json`, the eslint config, `.github/workflows/*`, the pull request template, `.gitignore` and `LICENSE`, plus the generated `*-function.ts` files. Change `.projenrc.ts` instead and run `npx projen`, then `npx projen build`, and commit everything both commands change; CI fails the build if it produces uncommitted changes.
 
 Tests use Jest and cover the pure functions: provider adapters against recorded responses in `test/fixtures`, and rendering against Snapshot fixtures derived from those recordings. The Lambda handlers are kept thin and aren't tested. See [Testing](docs/ARCHITECTURE.md#testing) for what the renderer tests assert and why.
 

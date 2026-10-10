@@ -29,6 +29,14 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     mergify: false, // its squash-merge config conflicts with the branch model
     pullRequestLint: false, // remove to enforce Conventional Commits PR titles
   },
+  // .github/pull_request_template.md is generated; edit it here, not there.
+  pullRequestTemplateContents: [
+    'Fixes #',
+    '',
+    '- [ ] `npx projen build` passes',
+    '- [ ] Generated files (`package.json`, `tsconfig*.json`, `.projen/*`, workflows) are committed alongside the `.projenrc.ts` change that produced them',
+    '- [ ] `docs/ARCHITECTURE.md` updated, if this changes a decision or adds one',
+  ],
   buildWorkflowOptions: {
     workflowTriggers: {
       pullRequest: {},
