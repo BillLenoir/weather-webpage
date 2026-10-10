@@ -269,13 +269,12 @@ For `main`:
    methods**, leave only **Merge**.
 5. Enable **Require status checks to pass**, and add the `build` check.
 
-For `develop`, do the same, but allow **Squash** as the merge method.
+For `develop`, do the same: **Merge** is the only allowed method there too.
 
 Notes:
 
 - A ruleset can only allow merge methods the repository itself allows. Under
-  **Settings → General → Pull Requests**, enable both **Allow merge commits** and
-  **Allow squash merging**.
+  **Settings → General → Pull Requests**, enable **Allow merge commits**.
 - The `build` check appears in the picker only after the build workflow has run
   at least once, within roughly the last week. If it's missing, open any pull
   request to trigger it, then come back.
@@ -284,10 +283,10 @@ Notes:
   pull request.
 - Rulesets are free on public repositories but need a paid plan on private ones.
 
-The merge-method rules enforce the branch model in the README: feature branches
-are squash-merged into `develop`, and `develop` is merged into `main` with a
-merge commit. Squashing `develop` into `main` would create a commit that
-`develop` lacks, and later merges would hit phantom conflicts.
+The merge-method rules enforce the branch model in the README: every merge is a
+merge commit, into `develop` and into `main` alike. Squashing anywhere rewrites
+commits that the other branch already has, so a later `develop` → `main` merge
+would hit phantom conflicts.
 
 ## Troubleshooting
 
