@@ -173,10 +173,10 @@
     },
     "fetch:fixture": {
       "name": "fetch:fixture",
-      "description": "Re-record test/fixtures/snapshot.json from live weather",
+      "description": "Save live weather as a Snapshot in tmp/snapshot.json",
       "steps": [
         {
-          "exec": "ts-node src/scripts/fetch-once.ts > test/fixtures/snapshot.json"
+          "exec": "mkdir -p tmp && ts-node src/scripts/fetch-once.ts > tmp/snapshot.json"
         }
       ]
     },

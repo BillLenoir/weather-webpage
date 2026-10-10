@@ -49,6 +49,7 @@ junit.xml
 /cdk.out/
 .cdk.staging/
 .parcel-cache/
+/tmp/
 !/.github/workflows/deploy.yml
 CLAUDE.md
 !/.projenrc.ts
