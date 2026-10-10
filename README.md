@@ -15,7 +15,9 @@ EventBridge Scheduler (hourly by default)
   → CloudFront       — served at https://<subdomain>.<your-domain>/<slug>/
 ```
 
-Locations shared between pages are fetched once. The pages have no client-side JavaScript. If a fetch fails, nothing is written. The previous pages stay up, and their "as of" timestamps show that they're stale.
+Locations shared between pages are fetched once. The pages have no client-side JavaScript; they reload themselves with a `meta refresh` tied to the fetch interval. If a fetch fails, nothing is written. The previous pages stay up, and their timestamps show that they're stale: each location shows when its weather was observed, and the footer shows when the page was last built.
+
+Why it works this way — the data model, the presentation rules and the failure design — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read that before changing anything in `src/`.
 
 Weather data comes from [Open-Meteo](https://open-meteo.com/), which doesn't need an API key. Its free API is for non-commercial use; check [their terms](https://open-meteo.com/en/terms) before deploying your own copy.
 
@@ -68,20 +70,22 @@ Every taggable resource in the stack is tagged `project=<projectName>`, using th
 ## Development
 
 ```sh
-npx projen build    # compile, test, synth
-npx projen test     # tests only
-npx projen deploy   # deploy with your current AWS credentials
+npx projen build          # compile, test, synth
+npx projen test           # tests only
+npx projen deploy         # deploy with your current AWS credentials
+npx projen fetch:once     # fetch live weather and print the Snapshot
+npx projen fetch:fixture  # the same, saved to tmp/snapshot.json
 ```
 
 This is a [projen](https://projen.io/) project. Don't hand-edit `package.json`, `tsconfig*.json`, the eslint config, `.github/workflows/*`, `.gitignore`, `LICENSE` or the generated `*-function.ts` files. Change `.projenrc.ts` instead and run `npx projen`, then `npx projen build`, and commit everything both commands change; CI fails the build if it produces uncommitted changes.
 
-Tests use Jest and cover the pure functions: provider adapters against recorded responses in `test/fixtures`, and rendering against Snapshot fixtures. The Lambda handlers are kept thin and aren't tested.
+Tests use Jest and cover the pure functions: provider adapters against recorded responses in `test/fixtures`, and rendering against Snapshot fixtures derived from those recordings. The Lambda handlers are kept thin and aren't tested. See [Testing](docs/ARCHITECTURE.md#testing) for what the renderer tests assert and why.
 
 ### Branches
 
 - Work happens on `feature/*` and `fix/*` branches.
-- These are squash-merged into `develop`.
-- `develop` is merged into `main` with a merge commit, never a squash.
+- These are merged into `develop` with a merge commit.
+- `develop` is merged into `main` with a merge commit. Never squash: it rewrites commits the other branch already has.
 - The build workflow runs on every PR and on every push to `develop`.
 - Pushing to `main` deploys.
 
