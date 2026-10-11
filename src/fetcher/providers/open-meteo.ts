@@ -59,7 +59,7 @@ export const DAILY_FIELDS = [
 const API_URL = 'https://api.open-meteo.com/v1/forecast';
 
 export const buildUrl = (
-  locations: LocationConfig[],
+  locations: readonly LocationConfig[],
   forecastDays: number,
 ): URL => {
   if (locations.length === 0) {
@@ -85,7 +85,7 @@ export const parseResponse = (json: unknown): OpenMeteoResponse =>
 
 export const toSnapshot = (
   parsed: OpenMeteoResponse,
-  locations: LocationConfig[],
+  locations: readonly LocationConfig[],
   fetchedAt = new Date().toISOString(),
 ): Snapshot => {
   if (parsed.length !== locations.length) {
@@ -154,7 +154,7 @@ export const toSnapshot = (
 };
 
 export const fetchWeather = async (
-  locations: LocationConfig[],
+  locations: readonly LocationConfig[],
   // Global fetch depth: pass the maximum forecastDays across all pages. One
   // snapshot serves every page, and each renderer slices the days it shows.
   forecastDays: number,
