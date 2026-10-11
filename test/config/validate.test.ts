@@ -1,5 +1,9 @@
 import { validateAndResolve } from '../../src/config/validate';
-import { PageConfig, WeatherConfig } from '../../src/config/weather.config';
+import {
+  config as projectConfig,
+  PageConfig,
+  WeatherConfig,
+} from '../../src/config/weather.config';
 import {
   defaultDisplay,
   makeConfig,
@@ -194,5 +198,14 @@ describe('validateAndResolve', () => {
       'page[0] "Bad Slug" location[0] "alpha": label must not be empty',
       'page[0] "Bad Slug" location[1] "beta": latitude 200 must be between -90 and 90',
     ]);
+  });
+});
+
+// Not a unit test of validateAndResolve but of the config this repo ships, so a
+// bad edit fails here as well as at synth. A fork that breaks its own config
+// sees this test fail too, which is the point.
+describe('the project config', () => {
+  it('passes validation', () => {
+    expect(() => validateAndResolve(projectConfig)).not.toThrow();
   });
 });
