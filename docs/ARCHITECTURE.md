@@ -40,17 +40,25 @@ The fetch interval is consumed twice: by the stack, as the schedule, and by the 
 
 ## Presentation
 
+**Minimal by default: every element on the page has to earn its place.** The test for anything new is whether a reader would miss it. That is why there is no unit legend — a page is read by people who know whether they think in Fahrenheit or Celsius, and printing `°F` beside every number tells them nothing they didn't already know. The two timestamps survive this test because they are the only evidence that the pipeline ran; decoration doesn't.
+
 **Two timestamps, labelled differently.** Each location block shows `Observed 5:15 PM` from that location's `current.time` — the provider's observation time, already local, so no timezone math. The footer shows `Updated 2026-09-23 21:15 UTC` from `fetchedAt`, as plain UTC with no conversion. They answer different questions, and without the page-level one there is no single freshness signal: a location whose observation happens to be recent could otherwise sit beside a stale one with nothing to distinguish them.
 
 **Weekday names, never "Today" or "Tomorrow".** The page can be up to an hour stale at any time of day, and a stale "Today" is confidently wrong. A stale weekday name is visibly wrong instead.
 
-**One emoji per display group, never a pair.** Pairs don't combine into a single glyph and they break cell alignment. Where emoji cannot distinguish two conditions — drizzle from rain, or freezing rain — the text label carries it. Weather emoji are written with the `U+FE0F` variation selector (`'☀️'`, not `'☀'`) so legacy symbols render in color rather than as monochrome text glyphs. `describeCondition` returns `{ label, icon }` either way, so moving to inline SVG later doesn't change its callers.
+**One emoji per display group, never a pair.** Pairs don't combine into a single glyph and they break cell alignment. Where emoji cannot distinguish two conditions — drizzle from rain, or freezing rain — the text label carries it. Weather emoji are written with the `U+FE0F` variation selector (`'☀️'`, not `'☀'`) so legacy symbols render in color rather than as monochrome text glyphs. `describeCondition` returns `{ label, icon }` either way, so moving to inline SVG later doesn't change its callers. Only the clear-sky groups vary by `isDay`; rain at night is still rain.
+
+**An unrecognized WMO code falls back rather than throwing.** It is the one place in the renderer that doesn't fail loudly on unexpected input: a provider adding a code should cost one odd-looking cell, not the whole page. Everything else the renderer can't make sense of — a missing location id, too few days — throws, because those mean the page would be wrong rather than incomplete.
 
 **Rounding happens in the formatters, never in a template:** whole degrees, whole mph, one decimal for inches. Halves round toward positive infinity, which is plain `Math.round`, so `-2.5` becomes `-2`. Weather sources don't agree on half-rounding and a degree either way is noise. `-0` is normalized to `0`, since `Math.round` produces it for anything in `[-0.5, 0)` and it interpolates as `"-0"`.
 
+**Formatters carry symbols but not unit words.** `formatTemperature` gives `72°`, `formatHumidity` gives `76%`, `formatWind` gives `14 NW` — never `72°F`, `14 mph` or `0.1 in`. A degree sign or a percent sign is part of reading the number; spelling out the unit tells readers what they already know, and `°` deliberately doesn't say which scale. Precipitation amounts have no symbol, so they appear as a bare number with the row label doing the work. There is one formatter per dimension (temperature, wind, precipitation) rather than a generic dispatcher, because each owns its own conversion, rounding and shape.
+
+**Dates and weekdays are built from string slices and fixed name arrays**, never `toLocaleDateString`. The one permitted use of `Date` in the whole pipeline is computing a weekday: `new Date(Date.UTC(y, m - 1, d)).getUTCDay()`. That is safe because it is constructed from integers and read in UTC — it never parses an offsetless string as if it were an instant, which is what the no-`Date` rule exists to prevent.
+
 **Wind direction uses 8 compass points**, each spanning 45°, rounded to the nearest — so N covers 337.5° to 22.5°.
 
-**Every interpolated string is escaped by default**, with an explicit opt-out for the few that are known-safe markup. The alternative — a list of which values need escaping — is a list someone will forget to extend.
+**Every interpolated string is escaped by default.** Markup is built with a tagged template that escapes plain strings and passes `SafeHtml` through untouched — the type its own output carries. So a nested fragment composes without being escaped twice, and the opt-out is the type rather than a `raw()` helper somebody will reach for by habit. The alternative, a list of which values need escaping, is a list someone will forget to extend.
 
 **No client-side JavaScript.** Pages refresh themselves with `<meta http-equiv="refresh">`, derived from the fetch interval rather than a separate constant. Styles are inlined in a single `<style>` block, so a page is one object with one cache policy.
 
