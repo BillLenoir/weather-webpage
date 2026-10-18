@@ -37,7 +37,7 @@ Weather data comes from [Open-Meteo](https://open-meteo.com/), which doesn't nee
 
 The region is fixed to `us-east-1`; see [Region](#region).
 
-Your config is checked when the project builds, not when it deploys: `npx projen build` fails if a slug is malformed or duplicated, if two pages give one location id different coordinates, if `forecastDays` is outside the provider's 1–16 range, or if a title or label is empty. Every problem is reported at once, so one build tells you everything to fix.
+Your config is checked when the project builds, not when it deploys: `npx projen build` fails if a slug is malformed or duplicated, if two pages give one location id different coordinates, if `forecastDays` is outside the 1–7 range, or if a title or label is empty. Every problem is reported at once, so one build tells you everything to fix.
 
 ## Deploy
 

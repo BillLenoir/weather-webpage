@@ -23,7 +23,7 @@ const dedupeLocationsById = (
 
 // Math.max() over no pages is -Infinity. The "at least one page" check reports
 // the real problem; the fallback just keeps forecastDays a usable number so the
-// 1..16 range check can't pile on a confusing second error about a value nobody
+// range check can't pile on a confusing second error about a value nobody
 // wrote. It never escapes: validation throws before any caller sees it.
 const deriveForecastDays = (pages: readonly PageConfig[]): number =>
   pages.length ? Math.max(...pages.map((p) => p.display.forecastDays)) : 1;
@@ -118,11 +118,13 @@ export const validateAndResolve = (config: WeatherConfig): ResolvedConfig => {
       fail({ prefix, message: 'title must not be empty' });
     }
 
+    // 7 is ours, not Open-Meteo's (which allows 16): day cards are labelled
+    // with weekday names and no date, so an eighth day would repeat a label.
     const days = page.display.forecastDays;
-    if (!Number.isInteger(days) || days < 1 || days > 16) {
+    if (!Number.isInteger(days) || days < 1 || days > 7) {
       fail({
         prefix,
-        message: `forecastDays ${days} must be a whole number between 1 and 16`,
+        message: `forecastDays ${days} must be a whole number between 1 and 7`,
       });
     }
 

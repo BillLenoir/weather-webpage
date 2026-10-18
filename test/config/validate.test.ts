@@ -104,12 +104,17 @@ describe('validateAndResolve', () => {
     [
       'a fractional forecastDays',
       makeConfig({ pages: [pageWithDays('page', 3.5)] }),
-      /forecastDays 3\.5 must be a whole number between 1 and 16/,
+      /forecastDays 3\.5 must be a whole number between 1 and 7/,
     ],
     [
-      'a forecastDays beyond the provider ceiling',
-      makeConfig({ pages: [pageWithDays('page', 20)] }),
-      /forecastDays 20 must be a whole number between 1 and 16/,
+      'a forecastDays one past the ceiling',
+      makeConfig({ pages: [pageWithDays('page', 8)] }),
+      /forecastDays 8 must be a whole number between 1 and 7/,
+    ],
+    [
+      'a forecastDays below the floor',
+      makeConfig({ pages: [pageWithDays('page', 0)] }),
+      /forecastDays 0 must be a whole number between 1 and 7/,
     ],
     [
       'an empty display.current',
