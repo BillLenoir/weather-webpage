@@ -18,3 +18,41 @@ const ENTITIES: Record<string, string> = {
 // double-escape the entities the other replacements had just inserted.
 export const esc = (value: string): string =>
   value.replace(/[&<>"']/g, (char) => ENTITIES[char]);
+
+class SafeHtmlValue {
+  static unwrap(value: SafeHtmlValue): string {
+    return value.#html;
+  }
+
+  readonly #html: string;
+
+  constructor(html: string) {
+    this.#html = html;
+  }
+}
+
+export type SafeHtml = SafeHtmlValue;
+
+export const toHtmlString = (safe: SafeHtml): string =>
+  SafeHtmlValue.unwrap(safe);
+
+export const html = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): SafeHtml => {
+  let result = strings[0] ?? '';
+
+  for (const [index, value] of values.entries()) {
+    if (value === null || value === undefined) {
+      throw new TypeError('HTML interpolation cannot be null or undefined');
+    }
+
+    result +=
+      value instanceof SafeHtmlValue
+        ? SafeHtmlValue.unwrap(value)
+        : esc(String(value));
+    result += strings[index + 1] ?? '';
+  }
+
+  return new SafeHtmlValue(result);
+};
