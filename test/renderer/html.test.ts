@@ -47,9 +47,29 @@ describe('html', () => {
     expect(toHtmlString(outer)).toBe('<div><strong>&lt;&amp;</strong></div>');
   });
 
-  it.each([null, undefined])('rejects a %s interpolation', (value) => {
-    expect(() => html`<p>${value}</p>`).toThrow(
-      'HTML interpolation cannot be null or undefined',
+  it('converts finite numbers and joins arrays without separators', () => {
+    const result = html`${12}${['<a>', 3, html`<b>ok</b>`]}`;
+
+    expect(toHtmlString(result)).toBe('12&lt;a&gt;3<b>ok</b>');
+  });
+
+  it.each([
+    [null, 'null'],
+    [undefined, 'undefined'],
+    [false, 'boolean false'],
+    [true, 'boolean true'],
+    [Number.NaN, 'NaN'],
+    [Number.POSITIVE_INFINITY, 'Infinity'],
+    [Number.NEGATIVE_INFINITY, '-Infinity'],
+  ])('rejects %s with its interpolation index', (value, description) => {
+    expect(() => html`${'first'} ${value}`).toThrow(
+      `html: interpolation 2 is ${description}`,
+    );
+  });
+
+  it('reports the top-level interpolation index for invalid array items', () => {
+    expect(() => html`${'first'} ${['ok', false]}`).toThrow(
+      'html: interpolation 2 is boolean false',
     );
   });
 });
