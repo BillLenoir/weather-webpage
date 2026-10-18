@@ -40,6 +40,12 @@ describe('html', () => {
     expect(toHtmlString(result)).toBe('<p>&lt;unsafe&gt;</p>');
   });
 
+  it('neutralizes a script tag in a plain string interpolation', () => {
+    const result = html`${'<script>alert(1)</script>'}`;
+
+    expect(toHtmlString(result)).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
   it('passes nested safe markup through without escaping it again', () => {
     const inner = html`<strong>${'<&'}</strong>`;
     const outer = html`<div>${inner}</div>`;
@@ -51,6 +57,36 @@ describe('html', () => {
     const result = html`${12}${['<a>', 3, html`<b>ok</b>`]}`;
 
     expect(toHtmlString(result)).toBe('12&lt;a&gt;3<b>ok</b>');
+  });
+
+  it('joins an array of safe fragments', () => {
+    const result = html`${[html`<b>one</b>`, html`<i>two</i>`]}`;
+
+    expect(toHtmlString(result)).toBe('<b>one</b><i>two</i>');
+  });
+
+  it('escapes each string in an array', () => {
+    const result = html`${['<one>', '<two>']}`;
+
+    expect(toHtmlString(result)).toBe('&lt;one&gt;&lt;two&gt;');
+  });
+
+  it('renders an empty array as nothing', () => {
+    const result = html`before${[]}after`;
+
+    expect(toHtmlString(result)).toBe('beforeafter');
+  });
+
+  it('renders a template with no interpolations', () => {
+    const result = html`<p>Static</p>`;
+
+    expect(toHtmlString(result)).toBe('<p>Static</p>');
+  });
+
+  it('round-trips a known fragment through toHtmlString', () => {
+    const result = html`<b>${'safe & sound'}</b>`;
+
+    expect(toHtmlString(result)).toBe('<b>safe &amp; sound</b>');
   });
 
   it.each([
