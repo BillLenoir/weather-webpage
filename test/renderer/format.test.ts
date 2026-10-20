@@ -3,6 +3,8 @@ import {
   formatPrecipitation,
   formatPrecipProbability,
   formatTemperature,
+  formatWind,
+  windCompass,
 } from '../../src/renderer/format';
 
 describe('formatTemperature', () => {
@@ -80,5 +82,55 @@ describe('formatHumidity', () => {
     [100, '100%'],
   ])('formats the %i boundary', (value, expected) => {
     expect(formatHumidity(value)).toBe(expected);
+  });
+});
+
+describe('windCompass', () => {
+  // Exact sector boundaries, where an off-by-one would live. Each belongs to
+  // the clockwise sector, so 22.5° is NE rather than N.
+  it.each<[number, string]>([
+    [22.5, 'NE'],
+    [67.5, 'E'],
+    [112.5, 'SE'],
+    [157.5, 'S'],
+    [202.5, 'SW'],
+    [247.5, 'W'],
+    [292.5, 'NW'],
+    [337.5, 'N'],
+  ])('puts %p° in the clockwise sector, %s', (degrees, expected) => {
+    expect(windCompass(degrees)).toBe(expected);
+  });
+
+  it('places a mid-sector bearing', () => {
+    expect(windCompass(315)).toBe('NW');
+  });
+
+  it('wraps past the last sector back to north', () => {
+    expect(windCompass(359)).toBe('N');
+  });
+
+  it('reads due north as N', () => {
+    expect(windCompass(0)).toBe('N');
+  });
+});
+
+describe('formatWind', () => {
+  it('formats a metric speed with its direction', () => {
+    expect(formatWind({ kph: 14.4, degrees: 315, units: 'kph' })).toBe('14 NW');
+  });
+
+  it('converts before rounding imperial speed', () => {
+    // 8.5 kph is 5.28 mph, which rounds to 5. Rounding first would give 9 kph
+    // and so 6 mph.
+    expect(formatWind({ kph: 8.5, degrees: 0, units: 'mph' })).toBe('5 N');
+  });
+
+  // A direction is meaningless at a standstill.
+  it('drops the direction when the wind is calm', () => {
+    expect(formatWind({ kph: 0, degrees: 0, units: 'kph' })).toBe('0');
+  });
+
+  it('drops the direction when the speed rounds to zero', () => {
+    expect(formatWind({ kph: 0.4, degrees: 180, units: 'kph' })).toBe('0');
   });
 });

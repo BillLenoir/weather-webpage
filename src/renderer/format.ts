@@ -2,6 +2,7 @@ import type { DisplayConfig } from '../config/weather.config';
 
 type TemperatureUnits = DisplayConfig['units']['temperature'];
 type PrecipitationUnits = DisplayConfig['units']['precipitation'];
+type WindUnits = DisplayConfig['units']['wind'];
 
 const round = (value: number): number => {
   const rounded = Math.round(value);
@@ -58,3 +59,35 @@ export const formatPrecipProbability = (value: number | null): string =>
   value === null ? NO_VALUE : `${round(value)}%`;
 
 export const formatHumidity = (value: number): string => `${round(value)}%`;
+
+// Clockwise from north, 45° each. Math.round puts an exact boundary in the
+// clockwise sector — 22.5° is NE, not N — the same half-up rule the other
+// formatters use. The modulo wraps 337.5° and above back to N.
+const COMPASS_POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
+
+export const windCompass = (degrees: number): string =>
+  COMPASS_POINTS[Math.round(degrees / 45) % 8];
+
+const convertWind = ({
+  kph,
+  units,
+}: {
+  kph: number;
+  units: WindUnits;
+}): number => (units === 'mph' ? kph / 1.609344 : kph);
+
+export const formatWind = ({
+  kph,
+  degrees,
+  units,
+}: {
+  kph: number;
+  degrees: number;
+  units: WindUnits;
+}): string => {
+  const speed = round(convertWind({ kph, units }));
+
+  // A direction is meaningless at a standstill, so calm wind is the speed
+  // alone.
+  return speed === 0 ? '0' : `${speed} ${windCompass(degrees)}`;
+};
