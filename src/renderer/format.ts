@@ -1,6 +1,7 @@
 import type { DisplayConfig } from '../config/weather.config';
 
 type TemperatureUnits = DisplayConfig['units']['temperature'];
+type PrecipitationUnits = DisplayConfig['units']['precipitation'];
 
 const round = (value: number): number => {
   const rounded = Math.round(value);
@@ -22,3 +23,38 @@ export const formatTemperature = ({
   celsius: number;
   units: TemperatureUnits;
 }): string => `${round(convertTemperature({ celsius, units }))}°`;
+
+const convertPrecipitation = ({
+  mm,
+  units,
+}: {
+  mm: number;
+  units: PrecipitationUnits;
+}): number => (units === 'in' ? mm / 25.4 : mm);
+
+// How much precipitation fell or is expected — not the chance of any. See
+// formatPrecipProbability below.
+export const formatPrecipitation = ({
+  mm,
+  units,
+}: {
+  mm: number;
+  units: PrecipitationUnits;
+}): string => {
+  const precipitation = convertPrecipitation({ mm, units });
+  return units === 'in'
+    ? (round(precipitation * 10) / 10).toFixed(1)
+    : String(round(precipitation));
+};
+
+// U+2014 em dash, for a value the provider didn't supply.
+const NO_VALUE = '—';
+
+// The chance of precipitation, not the amount — see formatPrecipitation above.
+// `=== null` deliberately, not a falsy check: 0 is a real probability and must
+// not collapse into NO_VALUE. Values aren't clamped, so an out-of-range number
+// from the provider shows on the page rather than being quietly massaged.
+export const formatPrecipProbability = (value: number | null): string =>
+  value === null ? NO_VALUE : `${round(value)}%`;
+
+export const formatHumidity = (value: number): string => `${round(value)}%`;
