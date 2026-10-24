@@ -1,9 +1,12 @@
 import {
+  formatFetchedAt,
   formatHumidity,
   formatPrecipitation,
   formatPrecipProbability,
   formatTemperature,
+  formatTime,
   formatWind,
+  weekday,
   windCompass,
 } from '../../src/renderer/format';
 
@@ -132,5 +135,54 @@ describe('formatWind', () => {
 
   it('drops the direction when the speed rounds to zero', () => {
     expect(formatWind({ kph: 0.4, degrees: 180, units: 'kph' })).toBe('0');
+  });
+});
+
+describe('formatTime', () => {
+  it.each<[string, string]>([
+    ['2026-09-23T17:15', '5:15 PM'],
+    ['2026-09-23T00:15', '12:15 AM'], // midnight, not 0:15 AM
+    ['2026-09-23T12:15', '12:15 PM'], // noon, not 0:15 PM
+    ['2026-09-23T09:05', '9:05 AM'], // hour loses its leading zero
+    ['2026-09-23T23:59', '11:59 PM'],
+    ['2026-09-23T00:00', '12:00 AM'],
+    ['2026-09-23T12:00', '12:00 PM'],
+  ])('renders %s as %s', (localIso, expected) => {
+    expect(formatTime(localIso)).toBe(expected);
+  });
+});
+
+describe('formatFetchedAt', () => {
+  it('renders an ISO UTC instant as a date, a time and UTC', () => {
+    expect(formatFetchedAt('2026-09-23T21:15:00.000Z')).toBe(
+      '2026-09-23 21:15 UTC',
+    );
+  });
+
+  it('does not shift the instant into another zone', () => {
+    // The fixture's 21:15 UTC is 17:15 in New York; neither appears converted.
+    expect(formatFetchedAt('2026-09-24T02:05:09.000Z')).toBe(
+      '2026-09-24 02:05 UTC',
+    );
+  });
+});
+
+describe('weekday', () => {
+  it.each<[string, string]>([
+    ['2026-09-23', 'Wed'], // the recorded fixture's date
+    ['2026-09-30', 'Wed'], // month boundary
+    ['2026-10-01', 'Thu'],
+    ['2026-12-31', 'Thu'], // year boundary
+    ['2027-01-01', 'Fri'],
+    ['2028-02-28', 'Mon'], // leap day: Mon, Tue, Wed proves no day is
+    ['2028-02-29', 'Tue'], // skipped or repeated across 29 February
+    ['2028-03-01', 'Wed'],
+  ])('names %s as %s', (date, expected) => {
+    expect(weekday(date)).toBe(expected);
+  });
+
+  it('uses Sunday-first names, matching getUTCDay', () => {
+    expect(weekday('2026-09-27')).toBe('Sun');
+    expect(weekday('2026-09-28')).toBe('Mon');
   });
 });

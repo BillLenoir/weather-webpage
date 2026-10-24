@@ -91,3 +91,41 @@ export const formatWind = ({
   // alone.
   return speed === 0 ? '0' : `${speed} ${windCompass(degrees)}`;
 };
+
+// The three functions below slice their input rather than parsing it. That is
+// safe because SnapshotSchema has already validated the shape at the renderer's
+// read boundary: current.time and the sunrise/sunset times as local ISO with no
+// offset, fetchedAt as ISO UTC, and daily[].date as a real calendar date.
+
+// From a local wall-clock string like '2026-09-23T17:15'. Hours lose their
+// leading zero, minutes keep both digits, and hour 0 and 12 both display as 12
+// — the edge the % 12 arithmetic gets wrong if written as `hour % 12`.
+export const formatTime = (localIso: string): string => {
+  const hour24 = Number(localIso.slice(11, 13));
+  const minutes = localIso.slice(14, 16);
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+
+  return `${hour12}:${minutes} ${hour24 < 12 ? 'AM' : 'PM'}`;
+};
+
+// From an ISO UTC instant like '2026-09-23T21:15:00.000Z'. 'UTC' is deliberate
+// and not a unit word: without it the instant is ambiguous in a way that `72°`
+// is not. Don't convert it to a local zone — its audience is whoever is
+// checking that the pipeline ran.
+export const formatFetchedAt = (iso: string): string =>
+  `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
+
+// Sunday first, because getUTCDay() returns 0 for Sunday.
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+// The one permitted Date in the pipeline: built from integers and read in UTC,
+// never parsing an offsetless string as an instant and never formatted. That is
+// what the no-Date rule exists to prevent; day-of-week arithmetic doesn't
+// follow from slicing.
+export const weekday = (date: string): string => {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const day = Number(date.slice(8, 10));
+
+  return WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+};

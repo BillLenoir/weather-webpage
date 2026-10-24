@@ -56,7 +56,7 @@ The fetch interval is consumed twice: by the stack, as the schedule, and by the 
 
 **Dates and weekdays are built from string slices and fixed name arrays**, never `toLocaleDateString`. The one permitted use of `Date` in the whole pipeline is computing a weekday: `new Date(Date.UTC(y, m - 1, d)).getUTCDay()`. That is safe because it is constructed from integers and read in UTC — it never parses an offsetless string as if it were an instant, which is what the no-`Date` rule exists to prevent.
 
-**Wind direction uses 8 compass points**, each spanning 45°, rounded to the nearest — so N covers 337.5° to 22.5°.
+**Wind direction uses 8 compass points**, each spanning 45°, rounded to the nearest. An exact boundary falls in the clockwise sector — 22.5° is NE, not N — which is the same half-up rule the rounding uses everywhere else, so N covers 337.5° up to but not including 22.5°. When the speed rounds to zero the direction is dropped entirely and the page shows `0`: a bearing is meaningless at a standstill, and printing one implies a precision the reading doesn't have.
 
 **Every interpolated string is escaped by default.** Markup is built with a tagged template that escapes plain strings and passes `SafeHtml` through untouched — the type its own output carries. So a nested fragment composes without being escaped twice, and the opt-out is the type rather than a `raw()` helper somebody will reach for by habit. The alternative, a list of which values need escaping, is a list someone will forget to extend.
 
