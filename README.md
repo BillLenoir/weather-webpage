@@ -17,6 +17,12 @@ EventBridge Scheduler (hourly by default)
 
 Locations shared between pages are fetched once. The pages have no client-side JavaScript; they reload themselves with a `meta refresh` tied to the fetch interval. If a fetch fails, nothing is written. The previous pages stay up, and their timestamps show that they're stale: each location shows when its weather was observed, and the footer shows when the page was last built.
 
+## What the pages show
+
+The pages are deliberately plain, and every element has to earn its place. Values carry symbols but never unit words — `72°`, `76%`, `14 NW` — and there is no unit legend anywhere: the degree sign doesn't say Fahrenheit or Celsius, because whoever reads the page already knows which one they asked for. Precipitation amounts have no symbol at all, so the row label says what the number is. Where the provider supplied no value, the page shows an em dash rather than a zero, since a 0% chance of rain and no forecast at all are different things. Current conditions show one emoji with a short label beside it, because an emoji can't tell light drizzle from heavy.
+
+Days are labelled with three-letter weekday names — never "Today", which is confidently wrong on a page that can be an hour stale — and `forecastDays` is capped at 7 so no two cards can carry the same label.
+
 Why it works this way — the data model, the presentation rules and the failure design — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read that before changing anything in `src/`.
 
 Weather data comes from [Open-Meteo](https://open-meteo.com/), which doesn't need an API key. Its free API is for non-commercial use; check [their terms](https://open-meteo.com/en/terms) before deploying your own copy.
@@ -55,7 +61,7 @@ A repository created from the template doesn't inherit this one's GitHub setting
 
 The deploy role trusts only `refs/heads/main` of your repository. Its only permission is to assume the CDK bootstrap roles.
 
-Pages are public to anyone who knows the URL and search engines (unless you add a reobots.txt file to restrict indexing). Adding or changing a page means editing the config and deploying, so pages you host for other people are yours to maintain.
+Pages are public to anyone who knows the URL and search engines (unless you add a robots.txt file to restrict indexing). Adding or changing a page means editing the config and deploying, so pages you host for other people are yours to maintain.
 
 ## Region
 
