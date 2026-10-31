@@ -83,11 +83,15 @@ export const buildUrl = (
 export const parseResponse = (json: unknown): OpenMeteoResponse =>
   OpenMeteoResponseSchema.parse(Array.isArray(json) ? json : [json]);
 
-export const toSnapshot = (
-  parsed: OpenMeteoResponse,
-  locations: readonly LocationConfig[],
+export const toSnapshot = ({
+  parsed,
+  locations,
   fetchedAt = new Date().toISOString(),
-): Snapshot => {
+}: {
+  parsed: OpenMeteoResponse;
+  locations: readonly LocationConfig[];
+  fetchedAt?: string;
+}): Snapshot => {
   if (parsed.length !== locations.length) {
     throw new Error(
       `Expected ${locations.length} locations, got ${parsed.length}`,
@@ -164,5 +168,5 @@ export const fetchWeather = async (
   });
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}: ${await res.text()}`);
 
-  return toSnapshot(parseResponse(await res.json()), locations);
+  return toSnapshot({ parsed: parseResponse(await res.json()), locations });
 };
