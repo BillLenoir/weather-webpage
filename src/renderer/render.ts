@@ -10,6 +10,7 @@
 // accessible name.
 import { describeCondition } from './conditions';
 import {
+  formatFetchedAt,
   formatHumidity,
   formatPrecipitation,
   formatPrecipProbability,
@@ -18,16 +19,18 @@ import {
   formatWind,
   weekday,
 } from './format';
-import { html, SafeHtml } from './html';
+import { html, SafeHtml, toHtmlString } from './html';
 import type {
   CurrentField,
   DisplayConfig,
   LocationConfig,
+  PageConfig,
 } from '../config/weather.config';
 import type {
   CurrentWeather,
   DayForecast,
   LocationWeather,
+  Snapshot,
 } from '../shared/model';
 
 // A cell holds a value, not markup: renderTable owns every <td>, <th> and
@@ -278,4 +281,56 @@ export const renderLocation = ({
       display,
     })}
   </section>`;
+};
+
+// One page, and the only place the renderer leaves SafeHtml for a plain string:
+// a document is complete, so nothing can wrap it and re-escape it. Everything
+// below this line is markup the handler writes to S3 as-is.
+//
+// intervalMinutes is passed rather than read from config, which keeps this file
+// importing types only. It is the fetch interval: a page that reloads on the
+// same cadence as the fetch can be a cycle behind at worst.
+//
+// No <style> yet — that lands with the styling pass, as one inlined block.
+export const renderPage = ({
+  page,
+  snapshot,
+  intervalMinutes,
+}: {
+  page: PageConfig;
+  snapshot: Snapshot;
+  intervalMinutes: number;
+}): string => {
+  const sections = page.locations.map((location) => {
+    const weather = snapshot.locations[location.id];
+
+    // The index signature claims this is always a LocationWeather, so the check
+    // reads as redundant and isn't: a snapshot older than a config change won't
+    // have the new id. Listing what it does have turns a typo into a one-line
+    // diagnosis.
+    if (weather === undefined) {
+      throw new Error(
+        `Page "${page.slug}" location "${location.id}" is not in the snapshot (it has: ${Object.keys(snapshot.locations).join(', ')})`,
+      );
+    }
+
+    return renderLocation({ location, weather, display: page.display });
+  });
+
+  return toHtmlString(
+    html`<!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta http-equiv="refresh" content="${intervalMinutes * 60}" />
+          <title>${page.title}</title>
+        </head>
+        <body>
+          <h1>${page.title}</h1>
+          ${sections}
+          <footer>Updated ${formatFetchedAt(snapshot.fetchedAt)}</footer>
+        </body>
+      </html>`,
+  );
 };

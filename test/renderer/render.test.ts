@@ -1,14 +1,22 @@
-import type { DisplayConfig } from '../../src/config/weather.config';
+import type {
+  DisplayConfig,
+  PageConfig,
+} from '../../src/config/weather.config';
 import { toHtmlString } from '../../src/renderer/html';
 import {
   renderCurrentTable,
   renderForecastTable,
   renderLocation,
+  renderPage,
   renderTable,
 } from '../../src/renderer/render';
 import { locations } from '../fixtures/locations';
 import { makeSnapshot } from '../fixtures/snapshot';
-import { defaultDisplay } from '../fixtures/weather-config';
+import {
+  defaultDisplay,
+  makeLocation,
+  makePage,
+} from '../fixtures/weather-config';
 
 // Centreville's three recorded days: 2026-09-23 (Wed, code 53 drizzle, 17/12.3,
 // 52%), 2026-09-24 (Thu, code 3 overcast, 16.1/10.9, 0%) and 2026-09-25 (Fri,
@@ -320,6 +328,75 @@ describe('renderLocation', () => {
 
     expect(() => section({ weather })).toThrow(
       'Location "centreville" has 2 forecast days, page asks for 3',
+    );
+  });
+});
+
+const pageConfig = (overrides?: Partial<PageConfig>): PageConfig =>
+  makePage({
+    slug: 'bill',
+    // The real config's title carries an apostrophe, so the escaping is worth
+    // asserting rather than designing around.
+    title: "Bill's Weather",
+    locations: [centrevilleConfig, dongtanConfig],
+    ...overrides,
+  });
+
+const pageMarkup = ({
+  page = pageConfig(),
+  snapshot = makeSnapshot(),
+  intervalMinutes = 60,
+} = {}) => renderPage({ page, snapshot, intervalMinutes });
+
+const sectionIds = (markup: string): string[] =>
+  [...markup.matchAll(/<section[^>]*\bid="([^"]*)"/g)].map(([, id]) => id);
+
+describe('renderPage', () => {
+  it('opens with a doctype and declares the document', () => {
+    const markup = pageMarkup();
+
+    expect(markup).toMatch(/^<!doctype html>/);
+    expect(markup).toContain('<html lang="en">');
+    expect(markup).toContain('charset="utf-8"');
+    expect(markup).toContain('width=device-width');
+  });
+
+  it('names the page in the title and the heading', () => {
+    const markup = pageMarkup();
+
+    expect(markup).toMatch(/<title>\s*Bill&#39;s Weather\s*<\/title>/);
+    expect(markup).toMatch(/<h1>\s*Bill&#39;s Weather\s*<\/h1>/);
+  });
+
+  it('reloads on the fetch interval, converted to seconds', () => {
+    expect(pageMarkup()).toContain('content="3600"');
+    expect(pageMarkup({ intervalMinutes: 15 })).toContain('content="900"');
+  });
+
+  it('stamps the footer with fetchedAt as plain UTC', () => {
+    // 21:15 UTC is 17:15 in New York, which is also Centreville's observation
+    // time, so a converted fetchedAt would still look plausible. Exact string.
+    expect(pageMarkup()).toContain('Updated 2026-09-23 21:15 UTC');
+  });
+
+  it('renders one section per location, in config order', () => {
+    expect(sectionIds(pageMarkup())).toEqual(['centreville', 'dongtan']);
+  });
+
+  it('follows config order when the locations are reordered', () => {
+    const page = pageConfig({ locations: [dongtanConfig, centrevilleConfig] });
+
+    expect(sectionIds(pageMarkup({ page }))).toEqual([
+      'dongtan',
+      'centreville',
+    ]);
+  });
+
+  it('throws when the snapshot lacks a location the page asks for', () => {
+    const page = pageConfig({ locations: [makeLocation()] });
+
+    expect(() => pageMarkup({ page })).toThrow(
+      'Page "bill" location "alpha" is not in the snapshot (it has: centreville, astoria, dongtan)',
     );
   });
 });
