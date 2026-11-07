@@ -6,6 +6,7 @@ import { toHtmlString } from '../../src/renderer/html';
 import {
   renderCurrentTable,
   renderForecastTable,
+  renderIndex,
   renderLocation,
   renderPage,
   renderTable,
@@ -398,5 +399,44 @@ describe('renderPage', () => {
     expect(() => pageMarkup({ page })).toThrow(
       'Page "bill" location "alpha" is not in the snapshot (it has: centreville, astoria, dongtan)',
     );
+  });
+});
+
+const links = (markup: string): string[] =>
+  [...markup.matchAll(/href="([^"]*)"/g)].map(([, href]) => href);
+
+const linkText = (markup: string): string[] =>
+  [...markup.matchAll(/<a[^>]*>([^<]*)<\/a>/g)].map(([, text]) => text.trim());
+
+describe('renderIndex', () => {
+  const index = () =>
+    renderIndex([makePage({ slug: 'bill' }), makePage({ slug: 'kate' })]);
+
+  it('links to every page, in config order', () => {
+    expect(links(index())).toEqual(['/bill/', '/kate/']);
+  });
+
+  it('keeps the trailing slash the CloudFront Function needs', () => {
+    for (const href of links(index())) {
+      expect(href).toMatch(/^\/[a-z0-9-]+\/$/);
+    }
+  });
+
+  it('labels each link with its slug', () => {
+    expect(linkText(index())).toEqual(['bill', 'kate']);
+  });
+
+  it('opens with a doctype and declares the document', () => {
+    const markup = index();
+
+    expect(markup).toMatch(/^<!doctype html>/);
+    expect(markup).toContain('<html lang="en">');
+    expect(markup).toContain('charset="utf-8"');
+    expect(markup).toContain('width=device-width');
+  });
+
+  // It holds no weather, so there is nothing for a reload to refresh.
+  it('does not reload itself', () => {
+    expect(index()).not.toContain('http-equiv');
   });
 });

@@ -334,3 +334,37 @@ export const renderPage = ({
       </html>`,
   );
 };
+
+// The root index: one link per page and nothing else. It exists so the site has
+// a root that isn't a 403; everyone reads their own page and bookmarks it.
+//
+// One parameter, so it stays positional. No snapshot, hence no footer: this
+// page holds no weather and can't go stale, which is also why it carries no
+// meta refresh.
+//
+// The trailing slash in the href is load-bearing — the CloudFront Function
+// appends index.html to URIs ending in '/', and without it the request 403s
+// against an OAC origin. Interpolating into an href is the one thing html.ts
+// warns is not enough on its own, and it is safe only because the path is
+// rooted and validateAndResolve has proved every slug URL-safe. A slug that
+// could carry a scheme would make this an injection.
+export const renderIndex = (pages: readonly PageConfig[]): string =>
+  toHtmlString(
+    html`<!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>Weather</title>
+        </head>
+        <body>
+          <h1>Weather</h1>
+          <ul>
+            ${pages.map(
+              (page) =>
+                html`<li><a href="/${page.slug}/">${page.slug}</a></li>`,
+            )}
+          </ul>
+        </body>
+      </html>`,
+  );
