@@ -19,9 +19,9 @@ Locations shared between pages are fetched once. The pages have no client-side J
 
 ## What the pages show
 
-The pages are deliberately plain, and every element has to earn its place. Values carry symbols but never unit words — `72°`, `76%`, `14 NW` — and there is no unit legend anywhere: the degree sign doesn't say Fahrenheit or Celsius, because whoever reads the page already knows which one they asked for. Precipitation amounts have no symbol at all, so the row label says what the number is. Where the provider supplied no value, the page shows an em dash rather than a zero, since a 0% chance of rain and no forecast at all are different things. Current conditions show one emoji with a short label beside it, because an emoji can't tell light drizzle from heavy.
+The pages are deliberately plain, and every element has to earn its place. Values carry symbols but never unit words — `72°`, `76%`, `14 NW` — and there is no unit legend anywhere: the degree sign doesn't say Fahrenheit or Celsius, because whoever reads the page already knows which one they asked for. Precipitation amounts have no symbol at all, so the column header says what the number is. Where the provider supplied no value, the page shows an em dash rather than a zero, since a 0% chance of rain and no forecast at all are different things. Current conditions show one emoji with a short label beside it, because an emoji can't tell light drizzle from heavy.
 
-Days are labelled with three-letter weekday names — never "Today", which is confidently wrong on a page that can be an hour stale — and `forecastDays` is capped at 7 so no two cards can carry the same label.
+Each location gets a heading, the time its weather was observed, and two small tables: conditions now, and one row per forecast day. Days are labelled with three-letter weekday names — never "Today", which is confidently wrong on a page that can be an hour stale — and `forecastDays` is capped at 7 so no two rows can carry the same label.
 
 Why it works this way — the data model, the presentation rules and the failure design — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read that before changing anything in `src/`.
 
@@ -83,7 +83,10 @@ npx projen test           # tests only
 npx projen deploy         # deploy with your current AWS credentials
 npx projen fetch:once     # fetch live weather and print the Snapshot
 npx projen fetch:fixture  # the same, saved to tmp/snapshot.json
+npx projen render:once    # render tmp/snapshot.json into tmp/site
 ```
+
+`render:once` reads the snapshot `fetch:fixture` saved rather than fetching, so a styling pass costs nothing and doesn't call the provider on every iteration. It writes the same keys the renderer writes to S3 — `<slug>/index.html` per page and a root `index.html` — so the layout the CloudFront Function depends on is visible on disk. Open a page file in a browser directly; the root index's links are absolute paths and won't resolve over `file://`.
 
 This is a [projen](https://projen.io/) project. Don't hand-edit a generated file: `.gitattributes` lists them all, each marked `linguist-generated` — among them `package.json`, `tsconfig*.json`, the eslint config, `.github/workflows/*`, the pull request template, `.gitignore` and `LICENSE`, plus the generated `*-function.ts` files. Change `.projenrc.ts` instead and run `npx projen`, then `npx projen build`, and commit everything both commands change; CI fails the build if it produces uncommitted changes.
 
