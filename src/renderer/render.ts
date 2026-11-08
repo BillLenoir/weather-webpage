@@ -9,6 +9,7 @@
 // reading cells with nothing to anchor them. The caption gives each table its
 // accessible name.
 import { describeCondition } from './conditions';
+import { FAVICON_HREF } from './favicon';
 import {
   formatFetchedAt,
   formatHumidity,
@@ -324,6 +325,7 @@ export const renderPage = ({
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta http-equiv="refresh" content="${intervalMinutes * 60}" />
+          <link rel="icon" href="${FAVICON_HREF}" />
           <title>${page.title}</title>
         </head>
         <body>
@@ -355,6 +357,7 @@ export const renderIndex = (pages: readonly PageConfig[]): string =>
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="${FAVICON_HREF}" />
           <title>Weather</title>
         </head>
         <body>

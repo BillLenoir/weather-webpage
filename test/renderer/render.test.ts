@@ -362,6 +362,17 @@ describe('renderPage', () => {
     expect(markup).toContain('width=device-width');
   });
 
+  // The '#' in each hex colour is the failure mode: a raw one makes the
+  // browser read the rest of the URI as a fragment and the icon vanishes.
+  it('inlines the favicon with its hex colours percent-encoded', () => {
+    const markup = pageMarkup();
+    const href = /<link rel="icon" href="([^"]*)"/.exec(markup)?.[1] ?? '';
+
+    expect(href).toMatch(/^data:image\/svg\+xml,/);
+    expect(href).toContain('%23');
+    expect(href).not.toContain('#');
+  });
+
   it('names the page in the title and the heading', () => {
     const markup = pageMarkup();
 
@@ -402,8 +413,9 @@ describe('renderPage', () => {
   });
 });
 
+// Anchors only: the document's other href is the inlined favicon.
 const links = (markup: string): string[] =>
-  [...markup.matchAll(/href="([^"]*)"/g)].map(([, href]) => href);
+  [...markup.matchAll(/<a href="([^"]*)"/g)].map(([, href]) => href);
 
 const linkText = (markup: string): string[] =>
   [...markup.matchAll(/<a[^>]*>([^<]*)<\/a>/g)].map(([, text]) => text.trim());
@@ -433,6 +445,7 @@ describe('renderIndex', () => {
     expect(markup).toContain('<html lang="en">');
     expect(markup).toContain('charset="utf-8"');
     expect(markup).toContain('width=device-width');
+    expect(markup).toContain('<link rel="icon" href="data:image/svg+xml,');
   });
 
   // It holds no weather, so there is nothing for a reload to refresh.
