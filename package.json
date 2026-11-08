@@ -16,6 +16,7 @@
     "package": "projen package",
     "post-compile": "projen post-compile",
     "pre-compile": "projen pre-compile",
+    "render:once": "projen render:once",
     "synth": "projen synth",
     "synth:silent": "projen synth:silent",
     "test": "projen test",

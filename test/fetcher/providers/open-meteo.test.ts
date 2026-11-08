@@ -181,12 +181,20 @@ describe('open-meteo', () => {
 
   describe('toSnapshot', () => {
     it('produces a Snapshot that satisfies SnapshotSchema', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
       expect(SnapshotSchema.parse(snapshot)).toEqual(snapshot);
     });
 
     it('records the location metadata the provider returned, not the configured coordinates', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
       const { id, latitude, longitude, elevation, timezone } =
         snapshot.locations.centreville;
 
@@ -204,7 +212,11 @@ describe('open-meteo', () => {
     });
 
     it('maps current fields to their Snapshot names', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       expect(snapshot.locations.centreville.current).toEqual({
         time: '2026-09-23T17:15',
@@ -220,14 +232,22 @@ describe('open-meteo', () => {
     });
 
     it('normalizes is_day 0/1 to a boolean', () => {
-      const { locations: byId } = toSnapshot(response(), locations, FETCHED_AT);
+      const { locations: byId } = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       expect(byId.centreville.current.isDay).toBe(true);
       expect(byId.dongtan.current.isDay).toBe(false); // recorded at 06:15, sunrise 06:20
     });
 
     it('keys locations by config id', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       expect(Object.keys(snapshot.locations).sort()).toEqual([
         'astoria',
@@ -241,8 +261,11 @@ describe('open-meteo', () => {
     });
 
     it('zips daily arrays index by index', () => {
-      const { daily } = toSnapshot(response(), locations, FETCHED_AT).locations
-        .centreville;
+      const { daily } = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      }).locations.centreville;
 
       expect(daily).toHaveLength(3);
       expect(daily[1]).toEqual({
@@ -257,7 +280,11 @@ describe('open-meteo', () => {
     });
 
     it("keeps each location's own local dates and times", () => {
-      const { locations: byId } = toSnapshot(response(), locations, FETCHED_AT);
+      const { locations: byId } = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       expect(byId.centreville.daily[0].date).toBe('2026-09-23');
       expect(byId.dongtan.daily[0].date).toBe('2026-09-24');
@@ -268,8 +295,8 @@ describe('open-meteo', () => {
       const parsed = response();
       parsed[0].daily.precipitation_probability_max[1] = null;
 
-      const { daily } = toSnapshot(parsed, locations, FETCHED_AT).locations
-        .centreville;
+      const { daily } = toSnapshot({ parsed, locations, fetchedAt: FETCHED_AT })
+        .locations.centreville;
 
       expect(daily[1].precipProbability).toBeNull();
       expect(daily[0].precipProbability).toBe(52); // neighbours untouched
@@ -277,7 +304,7 @@ describe('open-meteo', () => {
 
     it('pairs each response entry with its configured location', () => {
       const parsed = response();
-      const snapshot = toSnapshot(parsed, locations, FETCHED_AT);
+      const snapshot = toSnapshot({ parsed, locations, fetchedAt: FETCHED_AT });
 
       locations.forEach((config, i) => {
         const entry = parsed[i];
@@ -305,26 +332,38 @@ describe('open-meteo', () => {
       const parsed = response();
       parsed[1].location_id = 2;
 
-      expect(() => toSnapshot(parsed, locations, FETCHED_AT)).toThrow(
-        /location_id 2 at position 1/,
-      );
+      expect(() =>
+        toSnapshot({ parsed, locations, fetchedAt: FETCHED_AT }),
+      ).toThrow(/location_id 2 at position 1/);
     });
 
     it('throws when two entries resolve to the same location id', () => {
       expect(() =>
-        toSnapshot(response(), locationsDuplicateId, FETCHED_AT),
+        toSnapshot({
+          parsed: response(),
+          locations: locationsDuplicateId,
+          fetchedAt: FETCHED_AT,
+        }),
       ).toThrow('Response contained duplicate location ids');
     });
 
     it('throws when the response location count differs from the config', () => {
       // Fewer configured locations than the response returned.
-      expect(() => toSnapshot(response(), locationsTooFew, FETCHED_AT)).toThrow(
-        'Expected 2 locations, got 3',
-      );
+      expect(() =>
+        toSnapshot({
+          parsed: response(),
+          locations: locationsTooFew,
+          fetchedAt: FETCHED_AT,
+        }),
+      ).toThrow('Expected 2 locations, got 3');
 
       // And the other way round.
       expect(() =>
-        toSnapshot(response().slice(0, 2), locations, FETCHED_AT),
+        toSnapshot({
+          parsed: response().slice(0, 2),
+          locations,
+          fetchedAt: FETCHED_AT,
+        }),
       ).toThrow('Expected 3 locations, got 2');
     });
 
@@ -332,19 +371,27 @@ describe('open-meteo', () => {
       const parsed = response();
       parsed[0].daily.precipitation_probability_max.pop();
 
-      expect(() => toSnapshot(parsed, locations, FETCHED_AT)).toThrow(
-        'Ragged daily arrays for centreville',
-      );
+      expect(() =>
+        toSnapshot({ parsed, locations, fetchedAt: FETCHED_AT }),
+      ).toThrow('Ragged daily arrays for centreville');
     });
 
     it('uses the fetchedAt it is given', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       expect(snapshot.fetchedAt).toBe(FETCHED_AT);
     });
 
     it('leaves no provider field names in the output', () => {
-      const snapshot = toSnapshot(response(), locations, FETCHED_AT);
+      const snapshot = toSnapshot({
+        parsed: response(),
+        locations,
+        fetchedAt: FETCHED_AT,
+      });
 
       const leaked = keysOf(snapshot).filter((k) => PROVIDER_ONLY.includes(k));
       expect(leaked).toEqual([]);
@@ -352,7 +399,7 @@ describe('open-meteo', () => {
 
     it('defaults fetchedAt to now', () => {
       const before = Date.now();
-      const snapshot = toSnapshot(response(), locations);
+      const snapshot = toSnapshot({ parsed: response(), locations });
       const after = Date.now();
 
       expect(Date.parse(snapshot.fetchedAt)).toBeGreaterThanOrEqual(before);
