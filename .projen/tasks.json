@@ -224,6 +224,15 @@
       "name": "pre-compile",
       "description": "Prepare the project for compilation"
     },
+    "render:once": {
+      "name": "render:once",
+      "description": "Render tmp/snapshot.json into tmp/site, laid out as on S3",
+      "steps": [
+        {
+          "exec": "ts-node src/scripts/render-once.ts"
+        }
+      ]
+    },
     "synth": {
       "name": "synth",
       "description": "Synthesizes your cdk app into cdk.out",

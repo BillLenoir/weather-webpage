@@ -66,6 +66,10 @@ project.addTask('fetch:fixture', {
   description: 'Save live weather as a Snapshot in tmp/snapshot.json',
   exec: 'mkdir -p tmp && ts-node src/scripts/fetch-once.ts > tmp/snapshot.json',
 });
+project.addTask('render:once', {
+  description: 'Render tmp/snapshot.json into tmp/site, laid out as on S3',
+  exec: 'ts-node src/scripts/render-once.ts',
+});
 project.gitignore.exclude('/tmp/');
 
 const deploy = project.github!.addWorkflow('deploy');
