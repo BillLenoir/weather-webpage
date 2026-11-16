@@ -352,6 +352,9 @@ const pageMarkup = ({
 const sectionIds = (markup: string): string[] =>
   [...markup.matchAll(/<section[^>]*\bid="([^"]*)"/g)].map(([, id]) => id);
 
+const styleBlock = (markup: string): string =>
+  /<style>([\s\S]*?)<\/style>/.exec(markup)?.[1] ?? '';
+
 describe('renderPage', () => {
   it('opens with a doctype and declares the document', () => {
     const markup = pageMarkup();
@@ -404,6 +407,15 @@ describe('renderPage', () => {
     ]);
   });
 
+  it('inlines the stylesheet unescaped', () => {
+    const css = styleBlock(pageMarkup());
+
+    // Escaping any of < > " ' & produces an entity, so a single & is enough to
+    // catch a sheet that went through esc with its quoted selectors dead.
+    expect(css).toContain('data-period');
+    expect(css).not.toContain('&');
+  });
+
   it('throws when the snapshot lacks a location the page asks for', () => {
     const page = pageConfig({ locations: [makeLocation()] });
 
@@ -446,6 +458,11 @@ describe('renderIndex', () => {
     expect(markup).toContain('charset="utf-8"');
     expect(markup).toContain('width=device-width');
     expect(markup).toContain('<link rel="icon" href="data:image/svg+xml,');
+  });
+
+  // One sheet for the whole site, so the index can't drift out of the palette.
+  it('carries the same stylesheet as a page', () => {
+    expect(styleBlock(index())).toBe(styleBlock(pageMarkup()));
   });
 
   // It holds no weather, so there is nothing for a reload to refresh.

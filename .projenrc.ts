@@ -54,7 +54,19 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   requireApproval: awscdk.ApprovalLevel.NEVER, // required for unattended CI deploys
 
   deps: ['@aws-sdk/client-s3', 'zod'],
+  // Local preview only, never bundled into a Lambda. Declared rather than run
+  // through npx so the task uses a pinned local binary and can't stop to ask
+  // whether to install something.
+  devDeps: ['serve'],
 });
+
+// A CDK app runs from ts-node and jest, so projen leaves `compile` with no
+// steps and nothing in the build type-checks src. ts-jest covers what the tests
+// import but never emits declarations, which is how a declaration-only error
+// (TS4094 on an exported value whose inferred type is an unexported class)
+// reaches a green CI. tsconfig.json includes src only; test is covered by
+// ts-jest and .projenrc.ts by ts-node at `npx projen`.
+project.compileTask.exec('tsc --noEmit -p tsconfig.json');
 
 project.addTask('fetch:once', {
   description: 'Fetch live weather and print the Snapshot',
@@ -69,6 +81,10 @@ project.addTask('fetch:fixture', {
 project.addTask('render:once', {
   description: 'Render tmp/snapshot.json into tmp/site, laid out as on S3',
   exec: 'ts-node src/scripts/render-once.ts',
+});
+project.addTask('run:local', {
+  description: "Serve tmp/site at localhost, so the root index's links resolve",
+  exec: 'serve tmp/site',
 });
 project.gitignore.exclude('/tmp/');
 

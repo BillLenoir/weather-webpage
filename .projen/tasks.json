@@ -79,7 +79,12 @@
     },
     "compile": {
       "name": "compile",
-      "description": "Only compile"
+      "description": "Only compile",
+      "steps": [
+        {
+          "exec": "tsc --noEmit -p tsconfig.json"
+        }
+      ]
     },
     "default": {
       "name": "default",
@@ -230,6 +235,15 @@
       "steps": [
         {
           "exec": "ts-node src/scripts/render-once.ts"
+        }
+      ]
+    },
+    "run:local": {
+      "name": "run:local",
+      "description": "Serve tmp/site at localhost, so the root index's links resolve",
+      "steps": [
+        {
+          "exec": "serve tmp/site"
         }
       ]
     },

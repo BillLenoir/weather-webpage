@@ -21,6 +21,7 @@ import {
   weekday,
 } from './format';
 import { html, SafeHtml, toHtmlString } from './html';
+import { STYLES } from './styles';
 import type {
   CurrentField,
   DisplayConfig,
@@ -291,8 +292,6 @@ export const renderLocation = ({
 // intervalMinutes is passed rather than read from config, which keeps this file
 // importing types only. It is the fetch interval: a page that reloads on the
 // same cadence as the fetch can be a cycle behind at worst.
-//
-// No <style> yet — that lands with the styling pass, as one inlined block.
 export const renderPage = ({
   page,
   snapshot,
@@ -327,6 +326,7 @@ export const renderPage = ({
           <meta http-equiv="refresh" content="${intervalMinutes * 60}" />
           <link rel="icon" href="${FAVICON_HREF}" />
           <title>${page.title}</title>
+          ${STYLES}
         </head>
         <body>
           <h1>${page.title}</h1>
@@ -359,6 +359,7 @@ export const renderIndex = (pages: readonly PageConfig[]): string =>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="${FAVICON_HREF}" />
           <title>Weather</title>
+          ${STYLES}
         </head>
         <body>
           <h1>Weather</h1>

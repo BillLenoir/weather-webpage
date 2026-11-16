@@ -17,6 +17,7 @@
     "post-compile": "projen post-compile",
     "pre-compile": "projen pre-compile",
     "render:once": "projen render:once",
+    "run:local": "projen run:local",
     "synth": "projen synth",
     "synth:silent": "projen synth:silent",
     "test": "projen test",
@@ -40,6 +41,7 @@
     "jest-junit": "^17",
     "prettier": "^3.9.8",
     "projen": "^0.103.25",
+    "serve": "^14.2.8",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
