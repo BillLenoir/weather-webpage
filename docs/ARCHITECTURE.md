@@ -6,11 +6,13 @@ For deployment steps see [SETUP.md](SETUP.md). For what the project is, see the 
 
 ## Pipeline
 
-An EventBridge Scheduler rule runs the fetcher hourly. The fetcher calls the weather provider, normalizes the response to a `Snapshot`, and writes it to the data bucket as `latest.json` plus a timestamped copy under a history prefix. That write raises an S3 event, which invokes the renderer. The renderer reads the snapshot, writes one HTML page per configured page to the site bucket as `<slug>/index.html` plus a root `index.html` listing them, and CloudFront serves them.
+An EventBridge Scheduler schedule runs the fetcher hourly, and a deploy runs it once more (see [Infrastructure](#infrastructure)). The fetcher calls the weather provider, normalizes the response to a `Snapshot`, and writes it to the data bucket as `latest.json` plus a timestamped copy under a history prefix. That write raises an S3 event, which invokes the renderer. The renderer reads the snapshot, writes one HTML page per configured page to the site bucket as `<slug>/index.html` plus a root `index.html` listing them, and CloudFront serves them.
 
-There is no direct invoke and no Step Functions between the two Lambdas. The S3 object is the contract: either a valid snapshot exists or it doesn't, and the renderer can be run against any snapshot, including an old one from the history prefix.
+There is no direct invoke and no Step Functions between the two Lambdas. The S3 object is the contract: either a valid snapshot exists or it doesn't, and the renderer can be run against any snapshot, including an old one from the history prefix. The S3 event is filtered to `latest.json`, so writing the history copy doesn't fire a second render.
 
 **On failure, write nothing.** If a fetch fails the fetcher throws, no snapshot is written, the renderer never runs, and the previous pages stay up with their original timestamps. A stale page with a visible timestamp is a better failure mode than a page that is blank or half-updated. This is why the page-level timestamp is load-bearing rather than decoration, and why a CloudWatch alarm on renderer errors matters: a failed render is invisible by design.
+
+**Neither Lambda retries.** The renderer's asynchronous invocations are set to `retryAttempts: 0`, and the schedule's target to `maximumRetryAttempts: 0`. These are separate settings because Scheduler, not Lambda, owns the fetcher's retries. The failures a retry would meet again — a bad config, a malformed snapshot, a provider schema change — would otherwise log three identical errors and fire the alarm on each one, which teaches whoever reads it to treat the alarm as noise. A genuinely transient failure costs at most one interval, because the next scheduled fetch triggers a fresh render.
 
 The history prefix is kept for a future forecast-accuracy comparison — what was predicted for a day versus what happened. That's also why a snapshot records the coordinates and elevation the provider returned rather than the ones that were configured: an old snapshot has to be self-describing.
 
@@ -95,6 +97,22 @@ The rendered HTML is uploaded with a short `Cache-Control` max-age (around 300 s
 A CloudFront Function on viewer request appends `index.html` to URIs ending in `/`. This is required rather than optional: `defaultRootObject` only applies at the root, so `/<slug>/` would otherwise return 403 against an origin-access-control origin.
 
 Everything deploys to `us-east-1` because CloudFront requires its ACM certificate there. The Route 53 hosted zone lives outside the stack; the stack looks it up by name and adds records, and never creates or deletes the zone.
+
+**Alerts go out by email, through SNS.** Alarms notify an SNS topic with an email subscription, and the address is an optional field in `site.config.ts`. A fork that leaves it unset still gets the alarms, but sees them only in the CloudWatch console. The subscription is declared in the stack rather than added by hand, so replacing the topic can't silently drop it. Email rather than SMS because sending SMS from AWS in the US requires a registered origination identity, which means a registration process and a monthly fee for a few messages a year. If you want a text, add a carrier's email-to-SMS address as a second subscription.
+
+## Infrastructure
+
+**One command builds it and one command tears it down.** `npx projen deploy` creates everything in the stack, including waiting for the certificate to validate through DNS, and `npx projen destroy` removes it. A few things deliberately live outside the stack: the CDK bootstrap, which every CDK app in the account and region shares; the hosted zone, which outlives the app and whose name servers would change if it were recreated; and the repository's GitHub settings. The GitHub deploy role is outside it for now, applied by hand from `bootstrap/*.json`. It is planned to move into a second stack that is deployed only from a workstation, never by CI, so that the role CI runs as is never something CI can change. That stack will reference the account's existing GitHub OIDC provider rather than create it, since an account can have only one.
+
+**One stack, built from constructs.** The stack is composed of a few constructs, each in its own file — the data pipeline (data bucket, both Lambdas, schedule, S3 event) and site delivery (site bucket, certificate, distribution, CloudFront Function, DNS records) — and wires them together. Splitting stateful resources into a stack of their own, which AWS recommends for larger apps, would add cross-stack references for protection that a removal policy already gives.
+
+**Physical names are generated, never set.** Bucket names and the like are left to CDK, so a retained resource can never block the next deploy by holding its name, and a second copy of the stack can be deployed beside the first. The construct IDs in the code are the opposite: they become CloudFormation logical IDs, so renaming one, or moving it to a different parent, replaces the resource. For a bucket that means a new, empty bucket and the old one deleted.
+
+**What a teardown deletes.** The site bucket and the Lambda log groups are destroyed with the stack, the bucket emptied first, since everything in them can be regenerated. The data bucket is destroyed the same way while the project is in development, when its history is disposable. Before the site goes live it moves to `RETAIN`, because the history is the one thing in the stack that can't be regenerated. The switch changes only the deletion policy and doesn't replace the bucket.
+
+**A deploy populates the site.** A deploy that changes either Lambda's code invokes the fetcher once, so a change shows up within seconds rather than at the next scheduled fetch, and a first deploy doesn't serve 403 for up to an hour. The renderer still runs only from the S3 event. What decides whether a deploy re-runs the fetch is the two functions' code hashes, never a timestamp: a timestamp would make every synth differ, so `cdk diff` would never come back clean. If the provider is down, the deploy fails, which is an accurate report of a deploy whose result can't be shown.
+
+A deploy-time fetch can overlap a scheduled one, and nothing prevents it. Each S3 write is atomic and the last writer wins, so the worst outcome is a page built from the snapshot that is a few seconds older. Capping the fetcher at one concurrent run would be worse: the losing invocation would be throttled, failing the deploy or, with no retries, silently dropping the scheduled fetch. The history key is built from the full `fetchedAt` instant, so two fetches seconds apart each keep their copy, and the history isn't one snapshot per interval: every deploy adds one.
 
 ## Testing
 
