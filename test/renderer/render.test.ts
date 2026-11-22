@@ -352,6 +352,9 @@ const pageMarkup = ({
 const sectionIds = (markup: string): string[] =>
   [...markup.matchAll(/<section[^>]*\bid="([^"]*)"/g)].map(([, id]) => id);
 
+const styleBlock = (markup: string): string =>
+  /<style>([\s\S]*?)<\/style>/.exec(markup)?.[1] ?? '';
+
 describe('renderPage', () => {
   it('opens with a doctype and declares the document', () => {
     const markup = pageMarkup();
@@ -360,6 +363,17 @@ describe('renderPage', () => {
     expect(markup).toContain('<html lang="en">');
     expect(markup).toContain('charset="utf-8"');
     expect(markup).toContain('width=device-width');
+  });
+
+  // The '#' in each hex colour is the failure mode: a raw one makes the
+  // browser read the rest of the URI as a fragment and the icon vanishes.
+  it('inlines the favicon with its hex colours percent-encoded', () => {
+    const markup = pageMarkup();
+    const href = /<link rel="icon" href="([^"]*)"/.exec(markup)?.[1] ?? '';
+
+    expect(href).toMatch(/^data:image\/svg\+xml,/);
+    expect(href).toContain('%23');
+    expect(href).not.toContain('#');
   });
 
   it('names the page in the title and the heading', () => {
@@ -393,6 +407,15 @@ describe('renderPage', () => {
     ]);
   });
 
+  it('inlines the stylesheet unescaped', () => {
+    const css = styleBlock(pageMarkup());
+
+    // Escaping any of < > " ' & produces an entity, so a single & is enough to
+    // catch a sheet that went through esc with its quoted selectors dead.
+    expect(css).toContain('data-period');
+    expect(css).not.toContain('&');
+  });
+
   it('throws when the snapshot lacks a location the page asks for', () => {
     const page = pageConfig({ locations: [makeLocation()] });
 
@@ -402,8 +425,9 @@ describe('renderPage', () => {
   });
 });
 
+// Anchors only: the document's other href is the inlined favicon.
 const links = (markup: string): string[] =>
-  [...markup.matchAll(/href="([^"]*)"/g)].map(([, href]) => href);
+  [...markup.matchAll(/<a href="([^"]*)"/g)].map(([, href]) => href);
 
 const linkText = (markup: string): string[] =>
   [...markup.matchAll(/<a[^>]*>([^<]*)<\/a>/g)].map(([, text]) => text.trim());
@@ -433,6 +457,12 @@ describe('renderIndex', () => {
     expect(markup).toContain('<html lang="en">');
     expect(markup).toContain('charset="utf-8"');
     expect(markup).toContain('width=device-width');
+    expect(markup).toContain('<link rel="icon" href="data:image/svg+xml,');
+  });
+
+  // One sheet for the whole site, so the index can't drift out of the palette.
+  it('carries the same stylesheet as a page', () => {
+    expect(styleBlock(index())).toBe(styleBlock(pageMarkup()));
   });
 
   // It holds no weather, so there is nothing for a reload to refresh.

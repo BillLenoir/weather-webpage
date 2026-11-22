@@ -23,6 +23,8 @@ The pages are deliberately plain, and every element has to earn its place. Value
 
 Each location gets a heading, the time its weather was observed, and two small tables: conditions now, and one row per forecast day. Days are labelled with three-letter weekday names — never "Today", which is confidently wrong on a page that can be an hour stale — and `forecastDays` is capped at 7 so no two rows can carry the same label.
 
+Each location is colored by whether it's day or night where that location is, taken from the observation rather than from the reader's clock. On a page spanning distant time zones, the ones in the dark look it.
+
 Why it works this way — the data model, the presentation rules and the failure design — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Read that before changing anything in `src/`.
 
 Weather data comes from [Open-Meteo](https://open-meteo.com/), which doesn't need an API key. Its free API is for non-commercial use; check [their terms](https://open-meteo.com/en/terms) before deploying your own copy.
@@ -84,9 +86,14 @@ npx projen deploy         # deploy with your current AWS credentials
 npx projen fetch:once     # fetch live weather and print the Snapshot
 npx projen fetch:fixture  # the same, saved to tmp/snapshot.json
 npx projen render:once    # render tmp/snapshot.json into tmp/site
+npx projen run:local      # serve tmp/site at http://localhost:3000
 ```
 
-`render:once` reads the snapshot `fetch:fixture` saved rather than fetching, so a styling pass costs nothing and doesn't call the provider on every iteration. It writes the same keys the renderer writes to S3 — `<slug>/index.html` per page and a root `index.html` — so the layout the CloudFront Function depends on is visible on disk. Open a page file in a browser directly; the root index's links are absolute paths and won't resolve over `file://`.
+`render:once` reads the snapshot `fetch:fixture` saved rather than fetching, so a styling pass costs nothing and doesn't call the provider on every iteration. It writes the same keys the renderer writes to S3 — `<slug>/index.html` per page and a root `index.html` — so the layout the CloudFront Function depends on is visible on disk.
+
+`run:local` then serves that directory over HTTP, which is how to view it: a directory request resolves to its `index.html` the way it will in production, so the root index's absolute `/<slug>/` links work. Opening a page file directly over `file://` renders the page fine but leaves those links broken.
+
+`npx projen build` type-checks `src` with `tsc --noEmit` before the tests run. Projen leaves the `compile` task empty for a CDK app, since nothing needs transpiling ahead of time, but that also means nothing type-checks the sources — so the task is given that one step on purpose. Don't remove it as redundant.
 
 This is a [projen](https://projen.io/) project. Don't hand-edit a generated file: `.gitattributes` lists them all, each marked `linguist-generated` — among them `package.json`, `tsconfig*.json`, the eslint config, `.github/workflows/*`, the pull request template, `.gitignore` and `LICENSE`, plus the generated `*-function.ts` files. Change `.projenrc.ts` instead and run `npx projen`, then `npx projen build`, and commit everything both commands change; CI fails the build if it produces uncommitted changes.
 

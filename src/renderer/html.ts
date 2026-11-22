@@ -3,8 +3,15 @@
 // Scope: `esc` is correct for HTML text and for quoted attribute values. It is
 // NOT sufficient anywhere else — a URL in href/src (a `javascript:` scheme
 // survives escaping untouched), content inside <style>, or anything in a
-// script context. None of those exist today: the pages carry no client-side JS
-// and their styles are static. If that changes, this is not the tool for it.
+// script context.
+//
+// Two of those contexts now exist in the documents, and both are safe by
+// construction rather than by escaping. The hrefs are the root index's
+// `/<slug>/` links and the favicon's data URI: the first is a rooted path whose
+// slug validateAndResolve has proved URL-safe, the second a percent-encoded
+// constant. The <style> block is a constant too — styles.ts interpolates
+// nothing, which is the only reason esc never sees CSS. A value that has to
+// reach either context needs its own encoder; this is not the tool for it.
 
 const ENTITIES: Record<string, string> = {
   '&': '&amp;',

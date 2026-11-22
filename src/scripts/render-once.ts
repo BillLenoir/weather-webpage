@@ -8,9 +8,11 @@
 // Reads a file rather than fetching, so a styling pass is instant and doesn't
 // hit Open-Meteo. Run `npx projen fetch:fixture` once to produce the input.
 //
-// Opening tmp/site/<slug>/index.html in a browser works; the root index's
-// links won't, because they are absolute paths and file:// resolves them
-// against the filesystem root. That is the production shape, not a bug here.
+// Opening tmp/site/<slug>/index.html in a browser works, but the root index's
+// links won't: they are absolute paths and file:// resolves them against the
+// filesystem root. That is the production shape, not a bug here. Run
+// `npx projen run:local` to serve the directory over HTTP instead, where a
+// directory request resolves to its index.html as it will behind CloudFront.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { validateAndResolve } from '../config/validate';
