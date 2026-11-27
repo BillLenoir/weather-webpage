@@ -3,6 +3,8 @@
   "scripts": {
     "build": "projen build",
     "bundle": "projen bundle",
+    "bundle:fetcher/fetcher.lambda": "projen bundle:fetcher/fetcher.lambda",
+    "bundle:fetcher/fetcher.lambda:watch": "projen bundle:fetcher/fetcher.lambda:watch",
     "clobber": "projen clobber",
     "compile": "projen compile",
     "default": "projen default",

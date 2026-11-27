@@ -15,6 +15,7 @@
     "cdk.json",
     "LICENSE",
     "projenrc/tsconfig.json",
+    "src/fetcher/fetcher-function.ts",
     "test/tsconfig.json",
     "tsconfig.json"
   ],

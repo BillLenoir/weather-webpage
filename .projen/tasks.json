@@ -30,7 +30,49 @@
     },
     "bundle": {
       "name": "bundle",
-      "description": "Prepare assets"
+      "description": "Prepare assets",
+      "steps": [
+        {
+          "spawn": "bundle:fetcher/fetcher.lambda"
+        }
+      ]
+    },
+    "bundle:fetcher/fetcher.lambda": {
+      "name": "bundle:fetcher/fetcher.lambda",
+      "description": "Create a JavaScript bundle from src/fetcher/fetcher.lambda.ts",
+      "steps": [
+        {
+          "execArgs": [
+            "esbuild",
+            "--bundle",
+            "src/fetcher/fetcher.lambda.ts",
+            "--target=node22",
+            "--platform=node",
+            "--outfile=assets/fetcher/fetcher.lambda/index.js",
+            "--tsconfig=test/tsconfig.json",
+            "--external:@aws-sdk/*"
+          ]
+        }
+      ]
+    },
+    "bundle:fetcher/fetcher.lambda:watch": {
+      "name": "bundle:fetcher/fetcher.lambda:watch",
+      "description": "Continuously update the JavaScript bundle from src/fetcher/fetcher.lambda.ts",
+      "steps": [
+        {
+          "execArgs": [
+            "esbuild",
+            "--bundle",
+            "src/fetcher/fetcher.lambda.ts",
+            "--target=node22",
+            "--platform=node",
+            "--outfile=assets/fetcher/fetcher.lambda/index.js",
+            "--tsconfig=test/tsconfig.json",
+            "--external:@aws-sdk/*",
+            "--watch"
+          ]
+        }
+      ]
     },
     "clobber": {
       "name": "clobber",
