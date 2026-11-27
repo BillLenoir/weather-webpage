@@ -57,14 +57,14 @@ const PROVIDER_ONLY = [
 describe('open-meteo', () => {
   describe('buildUrl', () => {
     it('joins latitudes and longitudes in config order', () => {
-      const url = buildUrl(locations, 3);
+      const url = buildUrl({ locations, forecastDays: 3 });
 
       expect(url.searchParams.get('latitude')).toBe('38.84,40.77,37.19');
       expect(url.searchParams.get('longitude')).toBe('-77.43,-73.92,127.12');
     });
 
     it('targets the Open-Meteo forecast endpoint', () => {
-      const url = buildUrl(locations, 3);
+      const url = buildUrl({ locations, forecastDays: 3 });
 
       expect(`${url.origin}${url.pathname}`).toBe(
         'https://api.open-meteo.com/v1/forecast',
@@ -72,7 +72,7 @@ describe('open-meteo', () => {
     });
 
     it('requests the configured current and daily fields', () => {
-      const url = buildUrl(locations, 3);
+      const url = buildUrl({ locations, forecastDays: 3 });
 
       // Literal, not CURRENT_FIELDS.join(','): changing the request should be a
       // deliberate edit here too, since the schema and mapping must change with it.
@@ -98,7 +98,7 @@ describe('open-meteo', () => {
     });
 
     it('sets timezone=auto and forecast_days', () => {
-      const url = buildUrl(locations, 5);
+      const url = buildUrl({ locations, forecastDays: 5 });
 
       // auto = each location's own local time; the model stores these verbatim.
       expect(url.searchParams.get('timezone')).toBe('auto');
@@ -106,7 +106,9 @@ describe('open-meteo', () => {
     });
 
     it('throws when given no locations', () => {
-      expect(() => buildUrl([], 3)).toThrow('No locations to fetch');
+      expect(() => buildUrl({ locations: [], forecastDays: 3 })).toThrow(
+        'No locations to fetch',
+      );
     });
   });
 

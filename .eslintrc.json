@@ -61,6 +61,7 @@
         "devDependencies": [
           "**/test/**",
           "**/build-tools/**",
+          "src/fetcher/fetcher.lambda.ts",
           ".projenrc.ts",
           "projenrc/**/*.ts"
         ],

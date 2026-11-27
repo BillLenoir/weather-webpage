@@ -372,3 +372,28 @@ export const renderIndex = (pages: readonly PageConfig[]): string =>
         </body>
       </html>`,
   );
+
+export interface SiteObject {
+  readonly key: string;
+  readonly markup: string;
+}
+
+// Every object the renderer writes, keyed as it lands in the site bucket: one
+// <slug>/index.html per page, in config order, then the root index.html. The
+// layout is defined here and only here — the handler and render-once both call
+// this — because the CloudFront Function's '/' rule depends on it.
+export const renderSite = ({
+  pages,
+  snapshot,
+  intervalMinutes,
+}: {
+  pages: readonly PageConfig[];
+  snapshot: Snapshot;
+  intervalMinutes: number;
+}): SiteObject[] => [
+  ...pages.map((page) => ({
+    key: `${page.slug}/index.html`,
+    markup: renderPage({ page, snapshot, intervalMinutes }),
+  })),
+  { key: 'index.html', markup: renderIndex(pages) },
+];

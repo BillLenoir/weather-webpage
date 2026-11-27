@@ -49,6 +49,7 @@ junit.xml
 /cdk.out/
 .cdk.staging/
 .parcel-cache/
+!/src/fetcher/fetcher-function.ts
 /tmp/
 !/.github/workflows/deploy.yml
 CLAUDE.md

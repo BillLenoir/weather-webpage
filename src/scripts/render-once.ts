@@ -17,7 +17,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { validateAndResolve } from '../config/validate';
 import { config } from '../config/weather.config';
-import { renderIndex, renderPage } from '../renderer/render';
+import { renderSite, SiteObject } from '../renderer/render';
 import { SnapshotSchema } from '../shared/model';
 
 const INPUT = process.argv[2] ?? 'tmp/snapshot.json';
@@ -36,7 +36,7 @@ if (!existsSync(INPUT)) {
 // this same schema, so a Snapshot this script accepts is one the Lambda would.
 const snapshot = SnapshotSchema.parse(JSON.parse(readFileSync(INPUT, 'utf8')));
 
-const write = ({ key, markup }: { key: string; markup: string }): void => {
+const write = ({ key, markup }: SiteObject): void => {
   const file = join(OUT_DIR, key);
 
   mkdirSync(dirname(file), { recursive: true });
@@ -44,17 +44,10 @@ const write = ({ key, markup }: { key: string; markup: string }): void => {
   console.log(file);
 };
 
-for (const page of config.pages) {
-  write({
-    key: `${page.slug}/index.html`,
-    markup: renderPage({
-      page,
-      snapshot,
-      // The second of the fetch interval's two consumers, the first being the
-      // stack's schedule.
-      intervalMinutes: config.schedule.intervalMinutes,
-    }),
-  });
-}
-
-write({ key: 'index.html', markup: renderIndex(config.pages) });
+renderSite({
+  pages: config.pages,
+  snapshot,
+  // The second of the fetch interval's two consumers, the first being the
+  // stack's schedule.
+  intervalMinutes: config.schedule.intervalMinutes,
+}).forEach(write);

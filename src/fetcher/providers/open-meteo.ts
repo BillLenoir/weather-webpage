@@ -58,10 +58,13 @@ export const DAILY_FIELDS = [
 
 const API_URL = 'https://api.open-meteo.com/v1/forecast';
 
-export const buildUrl = (
-  locations: readonly LocationConfig[],
-  forecastDays: number,
-): URL => {
+export const buildUrl = ({
+  locations,
+  forecastDays,
+}: {
+  locations: readonly LocationConfig[];
+  forecastDays: number;
+}): URL => {
   if (locations.length === 0) {
     throw new Error('No locations to fetch');
   }
@@ -157,13 +160,16 @@ export const toSnapshot = ({
   };
 };
 
-export const fetchWeather = async (
-  locations: readonly LocationConfig[],
+export const fetchWeather = async ({
+  locations,
+  forecastDays,
+}: {
+  locations: readonly LocationConfig[];
   // Global fetch depth: pass the maximum forecastDays across all pages. One
   // snapshot serves every page, and each renderer slices the days it shows.
-  forecastDays: number,
-): Promise<Snapshot> => {
-  const res = await fetch(buildUrl(locations, forecastDays), {
+  forecastDays: number;
+}): Promise<Snapshot> => {
+  const res = await fetch(buildUrl({ locations, forecastDays }), {
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}: ${await res.text()}`);
