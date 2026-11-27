@@ -8,7 +8,7 @@ import { fetchWeather } from '../fetcher/providers/open-meteo';
 // any request, so this script doubles as a config check.
 const { locations, forecastDays } = validateAndResolve(config);
 
-fetchWeather(locations, forecastDays)
+fetchWeather({ locations, forecastDays })
   .then((snapshot) => console.log(JSON.stringify(snapshot, null, 2)))
   .catch((error) => {
     console.error(error);

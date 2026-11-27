@@ -9,6 +9,7 @@ import {
   renderIndex,
   renderLocation,
   renderPage,
+  renderSite,
   renderTable,
 } from '../../src/renderer/render';
 import { locations } from '../fixtures/locations';
@@ -468,5 +469,60 @@ describe('renderIndex', () => {
   // It holds no weather, so there is nothing for a reload to refresh.
   it('does not reload itself', () => {
     expect(index()).not.toContain('http-equiv');
+  });
+});
+
+describe('renderSite', () => {
+  const pages = () => [
+    pageConfig(),
+    pageConfig({
+      slug: 'kate',
+      title: "Kate's Weather",
+      locations: [locations[1]],
+    }),
+  ];
+
+  const site = ({ snapshot = makeSnapshot() } = {}) =>
+    renderSite({ pages: pages(), snapshot, intervalMinutes: 60 });
+
+  // The layout the CloudFront Function's '/' rule depends on: a page lives at
+  // <slug>/index.html, and the root index at index.html.
+  it('keys one object per page, in config order, then the root index', () => {
+    expect(site().map(({ key }) => key)).toEqual([
+      'bill/index.html',
+      'kate/index.html',
+      'index.html',
+    ]);
+  });
+
+  it('renders each page under its own key', () => {
+    const [bill, kate] = site();
+
+    expect(bill.markup).toBe(
+      renderPage({
+        page: pageConfig(),
+        snapshot: makeSnapshot(),
+        intervalMinutes: 60,
+      }),
+    );
+    expect(kate.markup).toContain('Kate&#39;s Weather');
+    expect(sectionIds(kate.markup)).toEqual(['astoria']);
+  });
+
+  it('puts the index of every page at the root', () => {
+    const root = site().at(-1);
+
+    expect(root?.markup).toBe(renderIndex(pages()));
+  });
+
+  // Everything is rendered before anything is returned, so a page that can't
+  // be rendered leaves the handler nothing to write rather than half a site.
+  it('throws rather than returning a partial site', () => {
+    const snapshot = makeSnapshot();
+    delete snapshot.locations.astoria;
+
+    expect(() => site({ snapshot })).toThrow(
+      'Page "kate" location "astoria" is not in the snapshot',
+    );
   });
 });
